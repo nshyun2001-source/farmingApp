@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>영농일지 & 장부 앱</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body {
+      background: #EFEEEA;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    #root { width: 100%; height: 100%; display: flex; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+const { useState, useRef, useCallback, useEffect } = React;
+
+const T={bg:'#FAFAF7',card:'#FFF',bd:'rgba(60,60,67,.10)',dv:'rgba(60,60,67,.07)',ink:'#1A1A17',s:'rgba(60,60,67,.60)',t:'rgba(60,60,67,.38)',J:'#3A7D4C',Js:'#EFF5EC',Ji:'#1E4A2A',L:'#A07820',Ls:'#F7F2E6',Li:'#5A3A08',red:'#C0412C',kr:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif',en:'-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif',mo:'ui-monospace,Menlo,monospace'};
+const BI={width:36,height:36,borderRadius:999,background:'rgba(60,60,67,.07)',border:0,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0};
+const I={
+  home:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M3 11l9-7 9 7v9a2 2 0 01-2 2h-4v-7h-6v7H5a2 2 0 01-2-2z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+  cal:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2" stroke={c} strokeWidth="1.7"/><path d="M3 9h18M8 3v4M16 3v4" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  map:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M9 4l-6 2v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+  chart:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  user:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke={c} strokeWidth="1.7"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  wallet:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke={c} strokeWidth="1.7"/><path d="M2 10h20M16 14h2" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  recpt:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M5 3v18l3-2 2 2 2-2 2 2 2-2 3 2V3H5z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/><path d="M9 8h6M9 12h6M9 16h4" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  plus:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke={c} strokeWidth="2.2" strokeLinecap="round"/></svg>,
+  srch:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke={c} strokeWidth="1.7"/><path d="M16.5 16.5L21 21" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  bell:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0112 0c0 5 2 6 2 7H4c0-1 2-2 2-7zM10 19a2 2 0 004 0" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  mic:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><rect x="9" y="3" width="6" height="12" rx="3" stroke={c} strokeWidth="1.7"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  cam:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M3 8a2 2 0 012-2h2l2-2h6l2 2h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" stroke={c} strokeWidth="1.7"/><circle cx="12" cy="13" r="4" stroke={c} strokeWidth="1.7"/></svg>,
+  leaf:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M5 19c0-9 5-14 14-14 0 9-5 14-14 14zM5 19l8-8" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  bag:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M5 7h14l-1 13a2 2 0 01-2 2H8a2 2 0 01-2-2L5 7z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/><path d="M9 7V5a3 3 0 016 0v2" stroke={c} strokeWidth="1.7"/></svg>,
+  cloud:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M7 18a4 4 0 010-8 6 6 0 0111-1 4 4 0 011 8H7z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+  drop:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 3s7 7 7 12a7 7 0 11-14 0c0-5 7-12 7-12z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+  bug:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><rect x="7" y="8" width="10" height="12" rx="5" stroke={c} strokeWidth="1.7"/><path d="M9 5l1.5 2M15 5l-1.5 2M3 12h4M17 12h4M3 17l4-2M21 17l-4-2" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  sun:(s=22,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke={c} strokeWidth="1.7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" stroke={c} strokeWidth="1.7" strokeLinecap="round"/></svg>,
+  pin:(s=18,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M12 22s7-7 7-12a7 7 0 10-14 0c0 5 7 12 7 12z" stroke={c} strokeWidth="1.7"/><circle cx="12" cy="10" r="2.5" stroke={c} strokeWidth="1.7"/></svg>,
+  chR:(s=14,c='currentColor')=><svg width={s} height={s} viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  chL:(s=16,c='currentColor')=><svg width={s} height={s} viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7l5 5" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  aU:(s=14,c='currentColor')=><svg width={s} height={s} viewBox="0 0 14 14" fill="none"><path d="M7 11V3M3 7l4-4 4 4" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  aD:(s=14,c='currentColor')=><svg width={s} height={s} viewBox="0 0 14 14" fill="none"><path d="M7 3v8M3 7l4 4 4-4" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  ok:(s=18,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  filt:(s=20,c='currentColor')=><svg width={s} height={s} viewBox="0 0 24 24" fill="none"><path d="M3 5h18l-7 9v6l-4-2v-4L3 5z" stroke={c} strokeWidth="1.7" strokeLinejoin="round"/></svg>,
+};
+const WX=[{k:'sunny',e:'☀️',l:'맑음'},{k:'partly',e:'⛅',l:'구름'},{k:'cloudy',e:'☁️',l:'흐림'},{k:'rain',e:'🌧️',l:'비'},{k:'snow',e:'❄️',l:'눈'}];
+const WT=[{k:'파종',c:T.J},{k:'관수',c:'#3A6AA0'},{k:'시비',c:'#3A70A0'},{k:'방제',c:'#A03A3A'},{k:'수확',c:'#8A6A20'},{k:'기타',c:T.s}];
+const CATS_E=['비료/퇴비','농약/방제','종자/모종','인건비','장비/기계','유류비','포장재','기타'];
+const CATS_I=['농산물 판매','직거래 판매','도매납품','정부지원금','기타'];
+const PAY=['현금','카드','계좌이체','어음','기타'];
+function mkId(){return Date.now()+Math.random();}
+function today(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+const fmt=n=>(n||0).toLocaleString('ko-KR');
+function plotCropList(p){return p.crops?.length?p.crops.map(c=>c.name).join(', '):'미경작';}
+function plotMainCrop(p){return p.crops?.[0]?.name||'미경작';}
+const playSound=(type='click')=>{
+  if(!window.AudioContext&&!window.webkitAudioContext)return;
+  if(!window.__AC){try{window.__AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return;}}
+  const AC=window.__AC;if(AC.state==='suspended')AC.resume();
+  const now=AC.currentTime;
+  if(type==='click'){
+    const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
+    o.frequency.setValueAtTime(800,now);o.frequency.exponentialRampToValueAtTime(300,now+0.04);
+    g.gain.setValueAtTime(0.04,now);g.gain.exponentialRampToValueAtTime(0.001,now+0.04);
+    o.connect(g);g.connect(AC.destination);o.start(now);o.stop(now+0.04);
+  }else if(type==='success'){
+    const o1=AC.createOscillator(),g1=AC.createGain();o1.type='sine';o1.frequency.setValueAtTime(659.25,now);
+    g1.gain.setValueAtTime(0,now);g1.gain.linearRampToValueAtTime(0.08,now+0.05);g1.gain.setTargetAtTime(0,now+0.05,0.2);
+    o1.connect(g1);g1.connect(AC.destination);o1.start(now);o1.stop(now+0.5);
+    const o2=AC.createOscillator(),g2=AC.createGain();o2.type='sine';o2.frequency.setValueAtTime(830.61,now+0.1);
+    g2.gain.setValueAtTime(0,now+0.1);g2.gain.linearRampToValueAtTime(0.08,now+0.15);g2.gain.setTargetAtTime(0,now+0.15,0.3);
+    o2.connect(g2);g2.connect(AC.destination);o2.start(now+0.1);o2.stop(now+0.6);
+  }
+};
+function Chip({children,tone='neutral',size='sm'}){
+  const m={neutral:{bg:'rgba(60,60,67,.07)',fg:T.ink},green:{bg:'#EAF5EA',fg:'#1C551C'},amber:{bg:'#FBF0DC',fg:'#704010'},blue:{bg:'#E8EFF8',fg:'#1A3878'},red:{bg:'#FAE8E8',fg:'#881A1A'}};
+  const{bg,fg}=m[tone]||m.neutral;const fs=size==='xs'?10:11,py=size==='xs'?2:3,px=size==='xs'?6:8;
+  return <span style={{display:'inline-flex',alignItems:'center',padding:`${py}px ${px}px`,borderRadius:999,fontFamily:T.kr,fontSize:fs,fontWeight:600,background:bg,color:fg,lineHeight:1}}>{children}</span>;
+}
+function Stripe({w=60,h=60,label='',tone='green',r=12}){
+  const c={green:['#E8EDE3','#DDE5D5'],amber:['#EFE8DA','#E5DCC8'],soil:['#E6DED2','#D9CFBF']}[tone]||['#EAEAE6','#DDDDD8'];
+  return<div style={{width:w,height:h,borderRadius:r,overflow:'hidden',background:`repeating-linear-gradient(135deg,${c[0]} 0 8px,${c[1]} 8px 16px)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><span style={{fontFamily:T.mo,fontSize:9,color:'rgba(0,0,0,.36)',letterSpacing:1}}>{label}</span></div>;
+}
+function Toggle({mode,onChange}){
+  return<div style={{display:'inline-flex',padding:3,borderRadius:999,background:'rgba(60,60,67,.08)'}}>
+    {[{k:'journal',l:'영농일지',c:T.J},{k:'ledger',l:'장부',c:T.L}].map(o=>{const on=mode===o.k;return<button key={o.k} onClick={()=>onChange(o.k)} style={{border:0,background:on?'#fff':'transparent',padding:'6px 12px',borderRadius:999,cursor:'pointer',display:'flex',alignItems:'center',gap:5,boxShadow:on?'0 1px 3px rgba(0,0,0,.10)':'none'}}><span style={{width:6,height:6,borderRadius:999,background:o.c,opacity:on?1:0.4}}/><span style={{fontFamily:T.kr,fontSize:13,fontWeight:700,color:on?T.ink:T.s}}>{o.l}</span></button>;})}  </div>;
+}
+function TopBar({mode,onMode,leading,trailing,onSearch,onBell,notifCount=0}){
+  return<div style={{padding:'6px 14px 8px',display:'flex',alignItems:'center',justifyContent:'space-between',background:T.bg,flexShrink:0,borderBottom:`0.5px solid ${T.bd}`}}>
+    <div style={{minWidth:36}}>{leading!==undefined?leading:
+      <button onClick={onBell} style={{...BI,position:'relative'}}>
+        {I.bell(20,T.ink)}
+        {notifCount>0&&<div style={{position:'absolute',top:4,right:4,width:8,height:8,borderRadius:999,background:T.red,border:'2px solid '+T.bg}}/>}
+      </button>}
+    </div>
+    <Toggle mode={mode} onChange={onMode}/>
+    <div style={{minWidth:36,display:'flex',justifyContent:'flex-end'}}>{trailing!==undefined?trailing:
+      <button onClick={onSearch} style={BI}>{I.srch(20,T.ink)}</button>}
+    </div>
+  </div>;
+}
+function NavBar({title,onBack,onHome,trailing}){return<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 14px',background:T.bg,flexShrink:0,borderBottom:`0.5px solid ${T.bd}`}}><div style={{display:'flex',alignItems:'center',gap:8,minWidth:50}}><button style={BI} onClick={onBack}>{I.chL(16,T.ink)}</button>{onHome&&<button style={BI} onClick={onHome}>{I.home(16,T.ink)}</button>}</div><span style={{fontFamily:T.kr,fontSize:16,fontWeight:700,color:T.ink,letterSpacing:-.3,flex:1,textAlign:'center'}}>{title}</span><div style={{minWidth:50,display:'flex',justifyContent:'flex-end'}}>{trailing||<div style={{width:36}}/>}</div></div>;}
+function TabBar({tabs,active,onTab,accent}){return<div style={{display:'flex',justifyContent:'space-around',alignItems:'flex-start',paddingTop:8,paddingBottom:'calc(10px + env(safe-area-inset-bottom, 0px))',background:'rgba(255,255,255,.97)',borderTop:`0.5px solid ${T.bd}`,flexShrink:0}}>{tabs.map(t=>{const on=active===t.k;return<button key={t.k} onClick={()=>onTab(t.k)} style={{border:0,background:'transparent',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'4px 6px',minWidth:52}}><div style={{height:26,display:'flex',alignItems:'center',justifyContent:'center'}}>{t.add?<div style={{width:42,height:42,borderRadius:21,background:accent,display:'flex',alignItems:'center',justifyContent:'center',marginTop:-10,boxShadow:'0 4px 12px rgba(0,0,0,.15)'}}>{I.plus(22,'#fff')}</div>:t.fn(22,on?accent:T.s)}</div><span style={{fontFamily:T.kr,fontSize:9.5,fontWeight:600,color:on?accent:T.s}}>{t.label}</span><div style={{width:4,height:4,borderRadius:2,background:on?accent:'transparent'}}/></button>;})} </div>;}
+function Card({children,style,onClick}){return<div onClick={onClick} style={{background:T.card,borderRadius:14,padding:'12px 14px',border:`0.5px solid ${T.bd}`,marginBottom:8,boxShadow:'0 1px 4px rgba(0,0,0,.04)',cursor:onClick?'pointer':'default',...style}}>{children}</div>;}
+function Toast({msg,color}){if(!msg)return null;return<div style={{position:'absolute',bottom:80,left:'50%',transform:'translateX(-50%)',background:color||T.J,color:'#fff',padding:'10px 22px',borderRadius:24,fontSize:13,fontWeight:700,whiteSpace:'nowrap',zIndex:999,boxShadow:'0 4px 16px rgba(0,0,0,.18)'}}>{msg}</div>;}
+function Phone({children,isMobile}){
+  if(isMobile){
+    return<>{children}</>;
+  }
+  return<div style={{width:'100%',maxWidth:390,borderRadius:40,overflow:'hidden',position:'relative',background:'#F2F2F7',boxShadow:'0 20px 48px rgba(0,0,0,.16),0 0 0 1px rgba(0,0,0,.10)',display:'flex',flexDirection:'column'}}>
+    <div style={{flexShrink:0,background:'#F2F2F7',position:'relative',zIndex:20}}>
+      <div style={{position:'absolute',top:8,left:'50%',transform:'translateX(-50%)',width:120,height:33,borderRadius:20,background:'#000',zIndex:30}}/>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 24px 6px'}}><span style={{fontFamily:'-apple-system,system-ui',fontWeight:600,fontSize:14,color:'#000'}}>9:41</span><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="#000" strokeOpacity=".3" fill="none"/><rect x="2" y="2" width="18" height="8" rx="1.5" fill="#000"/></svg></div>
+    </div>
+    <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:T.bg}}>{children}</div>
+    <div style={{flexShrink:0,height:20,background:'#fff',display:'flex',justifyContent:'center',alignItems:'center'}}><div style={{width:120,height:4,borderRadius:100,background:'rgba(0,0,0,.18)'}}/></div>
+  </div>;
+}
+function Popup({popup,onClose}){
+  const [val,setVal]=useState(popup.val||'');
+  const confirm=()=>{if(popup.type!=='options')popup.set(val);onClose();};
+  const SUGG={'약제명':['아미스타 톱','델란','캡탄','보르도액','코니도'],'비료명':['NK복합비료','요소비료','황산칼리','석회','퇴비'],'관수방식':['점적관수','스프링클러','두둑관수'],'파종방식':['직파','이식','기계파종'],'품질등급':['특 100%','상품 80%','비상품 포함'],'출하처':['청도농협','로컬푸드','직판장','도매시장'],'관수시간':['30분','1시간','1시간 30분','2시간'],'작업내용':['지주대 설치','그물망 설치','멀칭 제거','적과']}[popup.label]||[];
+  return<div onClick={e=>e.target===e.currentTarget&&onClose()} style={{position:'absolute',inset:0,background:'rgba(0,0,0,.46)',zIndex:400,display:'flex',alignItems:'flex-end'}}>
+    <div style={{width:'100%',background:'#fff',borderRadius:'22px 22px 0 0',padding:'0 18px 28px',maxHeight:'85%',overflowY:'auto'}}>
+      <div style={{width:38,height:4,background:'rgba(0,0,0,.14)',borderRadius:2,margin:'13px auto 4px'}}/>
+      <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0 14px',borderBottom:`0.5px solid rgba(60,60,67,.1)`}}><span style={{fontSize:20}}>{popup.ic}</span><span style={{fontFamily:T.kr,fontSize:17,fontWeight:700,color:T.ink}}>{popup.label}</span></div>
+      {popup.type==='options'&&<div style={{paddingTop:10,display:'flex',flexDirection:'column',gap:6}}>{popup.options?.map(o=><button key={o.k} onClick={()=>{popup.set(o.k);onClose();}} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 14px',borderRadius:12,border:`1px solid ${popup.val===o.k?T.J:T.bd}`,background:popup.val===o.k?T.Js:'#FAFCFA',cursor:'pointer',fontFamily:T.kr,textAlign:'left'}}><div><div style={{fontSize:15,fontWeight:700,color:T.ink}}>{o.l}</div>{o.sub&&<div style={{fontSize:12,color:T.s,marginTop:2}}>{o.sub}</div>}</div>{popup.val===o.k&&I.ok(16,T.J)}</button>)}</div>}
+      {popup.type==='text'&&<div style={{paddingTop:14}}>
+        <input value={val} onChange={e=>setVal(e.target.value)} placeholder={popup.ph||'입력하세요'} onKeyDown={e=>e.key==='Enter'&&confirm()} style={{width:'100%',padding:'13px 14px',border:`1.5px solid ${T.J}`,borderRadius:11,fontSize:16,fontWeight:600,color:T.ink,fontFamily:T.kr,outline:'none',boxSizing:'border-box',background:'#FAFCFA'}}/>
+        {SUGG.length>0&&<div style={{marginTop:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.t,marginBottom:8,textTransform:'uppercase',letterSpacing:.4}}>자주 쓰는 입력</div><div style={{display:'flex',flexWrap:'wrap',gap:7}}>{SUGG.map(s=><button key={s} onClick={()=>setVal(s)} style={{padding:'6px 13px',borderRadius:999,border:`1px solid ${val===s?T.J:T.bd}`,background:val===s?T.Js:'#fff',fontFamily:T.kr,fontSize:13,fontWeight:600,color:val===s?T.Ji:T.ink,cursor:'pointer'}}>{s}</button>)}</div></div>}
+      </div>}
+      <div style={{display:'flex',gap:10,marginTop:18}}><button onClick={onClose} style={{flex:1,padding:'13px',borderRadius:11,border:`1px solid ${T.bd}`,background:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.s,cursor:'pointer'}}>취소</button>{popup.type!=='options'&&<button onClick={confirm} style={{flex:2,padding:'13px',borderRadius:11,border:'none',background:T.J,color:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,cursor:'pointer'}}>확인</button>}</div>
+    </div>
+  </div>;
+}
+function JAddWork({nav,mode,onMode,data,onSave,initParams,toast2,addCropToPlot,goHome}){
+  const WDS=['일','월','화','수','목','금','토'];
+  const [entryDate,setEntryDate]=useState(initParams?.date||today());
+  const [wtype,setWtype]=useState(initParams?.workType||'파종');
+  const [plotId,setPlotId]=useState(String(initParams?.plotId||data.plots[0]?.id||''));
+  const [cropVal,setCropVal]=useState('');const [cropId,setCropId]=useState('');
+  const [f1,setF1]=useState('');const [f2,setF2]=useState('');const [f3,setF3]=useState('');
+  const [wx,setWx]=useState('sunny');const [temp,setTemp]=useState('');const [hum,setHum]=useState('');
+  const [detail,setDetail]=useState('');const [photos,setPhotos]=useState([]);const [popup,setPopup]=useState(null);
+  const camRef=useRef();const galRef=useRef();const sttRef=useRef();const timerRef=useRef();
+  const [sttOn,setSttOn]=useState(false);const [sttTime,setSttTime]=useState(0);const [sttInt,setSttInt]=useState('');const [sttErr,setSttErr]=useState('');
+  const isSowing=wtype==='파종';
+  const plot=data.plots.find(p=>String(p.id)===String(plotId))||null;
+  const plotCrops=plot?.crops||[];
+  const selCrop=plotCrops.find(c=>c.id===cropId)||(plotCrops.length===1?plotCrops[0]:null);
+  const FM={파종:[{l:'품종',ic:'🌱',ph:'예) 후지 접목묘',val:f1,set:setF1},{l:'파종량',ic:'📦',ph:'예) 200주',val:f2,set:setF2},{l:'파종방식',ic:'⚙️',ph:'예) 직파, 이식',val:f3,set:setF3}],관수:[{l:'관수방식',ic:'💧',ph:'예) 점적관수',val:f1,set:setF1},{l:'관수시간',ic:'⏱',ph:'예) 1시간 30분',val:f2,set:setF2},{l:'사용량',ic:'📦',ph:'예) 2,000L',val:f3,set:setF3}],시비:[{l:'비료명',ic:'🧪',ph:'예) NK복합비료',val:f1,set:setF1},{l:'시비량',ic:'📦',ph:'예) 4kg',val:f2,set:setF2},{l:'시비방법',ic:'⚙️',ph:'예) 토양혼합',val:f3,set:setF3}],방제:[{l:'약제명',ic:'🐛',ph:'예) 아미스타 톱',val:f1,set:setF1},{l:'희석배수',ic:'💧',ph:'예) 800배',val:f2,set:setF2},{l:'사용량',ic:'📦',ph:'예) 500L',val:f3,set:setF3}],수확:[{l:'수확량',ic:'🌾',ph:'예) 250kg',val:f1,set:setF1},{l:'품질등급',ic:'⭐',ph:'예) 상품 80%',val:f2,set:setF2},{l:'출하처',ic:'🚛',ph:'예) 청도농협',val:f3,set:setF3}],기타:[{l:'작업내용',ic:'📝',ph:'예) 지주대 설치',val:f1,set:setF1}]};
+  const curF=FM[wtype]||[];
+  const changeType=t=>{setWtype(t);setF1('');setF2('');setF3('');setCropId('');if(t!=='파종')setCropVal('');};
+  const changePlot=pid=>{setPlotId(pid);setCropId('');if(!isSowing)setCropVal('');};
+  const startSTT=()=>{setSttErr('');const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){setSttErr('음성 인식 미지원');return;}const r=new SR();r.lang='ko-KR';r.continuous=true;r.interimResults=true;r.onstart=()=>{setSttOn(true);setSttInt('');setSttTime(0);timerRef.current=setInterval(()=>setSttTime(t=>t+1),1000);};r.onresult=e=>{let it='',fi='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fi+=t;else it+=t;}setSttInt(it);if(fi)setDetail(p=>(p?p+' ':'')+fi.trim());};r.onerror=e=>{clearInterval(timerRef.current);setSttOn(false);setSttInt('');setSttErr({'not-allowed':'마이크 권한 필요','no-speech':'음성 감지 안 됨'}[e.error]||'오류: '+e.error);};r.onend=()=>{clearInterval(timerRef.current);setSttOn(false);setSttInt('');};sttRef.current=r;r.start();};
+  const stopSTT=()=>{clearInterval(timerRef.current);sttRef.current?.stop();setSttOn(false);setSttInt('');};
+  const fmtT=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+  const readPhotos=e=>{[...e.target.files].forEach(f=>{if(photos.length>=10)return;const r=new FileReader();r.onload=ev=>setPhotos(p=>[...p,{url:ev.target.result,tag:f.name.split('.')[0].slice(0,4)}]);r.readAsDataURL(f);});e.target.value='';};
+  const save=()=>{
+    if(sttOn)stopSTT();
+    if(isSowing&&!cropVal.trim()){toast2&&toast2('파종할 작물명을 입력해주세요',false);return;}
+    const parts=[isSowing&&cropVal&&`파종 작물: ${cropVal}`,f1&&`${curF[0]?.l}: ${f1}`,f2&&`${curF[1]?.l}: ${f2}`,f3&&`${curF[2]?.l}: ${f3}`,detail].filter(Boolean);
+    const entry={id:mkId(),date:entryDate,plotId:Number(plotId),cropId:isSowing?undefined:(selCrop?.id),cropVal:isSowing?cropVal:(selCrop?.name||''),workType:wtype,wx,temp,hum,detail:parts.join('\n'),photos:photos.map(p=>p.url),saved:true};
+    if(isSowing&&cropVal.trim()&&addCropToPlot&&!plot?.crops?.some(c=>c.name===cropVal.trim()))addCropToPlot(Number(plotId),{name:cropVal.trim(),section:'',area:'',planted:entryDate,harvest:'',stage:'파종 후',status:'정상',warn:false});
+    onSave(entry);
+  };
+  const ROW={display:'flex',alignItems:'center',padding:'0 16px',minHeight:50,borderBottom:`0.5px solid ${T.dv}`};
+  const ROW_L={display:'flex',alignItems:'center',padding:'0 16px',minHeight:50};
+  const LBL={display:'flex',alignItems:'center',gap:7,width:90,flexShrink:0};
+  const CARD={background:T.card,borderRadius:16,border:`0.5px solid ${T.bd}`,overflow:'hidden',marginBottom:12};
+  const fmtE=d=>{const dt=new Date(d+'T00:00:00');return`${d.slice(5).replace('-','.')} ${WDS[dt.getDay()].toUpperCase()}`;};
+  const renderCropRow=()=>{
+    if(plotCrops.length===0)return<div style={{...ROW_L}}><div style={LBL}>{I.leaf(15,T.t)}<span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>대상 작물</span></div><span style={{flex:1,fontFamily:T.kr,fontSize:14,color:T.t}}>등록된 작물 없음</span><button onClick={()=>changeType('파종')} style={{padding:'3px 10px',borderRadius:8,border:`1px solid ${T.J}`,background:T.Js,color:T.Ji,fontFamily:T.kr,fontSize:11,fontWeight:700,cursor:'pointer'}}>+ 파종 등록</button></div>;
+    if(plotCrops.length===1)return<div style={ROW_L}><div style={LBL}>{I.leaf(15,T.t)}<span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>대상 작물</span></div><span style={{flex:1,fontFamily:T.kr,fontSize:15,fontWeight:600,color:T.ink}}>{plotCrops[0].name}</span><span style={{fontFamily:T.kr,fontSize:10,color:T.t,background:'rgba(60,60,67,.07)',padding:'3px 8px',borderRadius:999}}>자동</span></div>;
+    return<div style={{...ROW_L,cursor:'pointer'}} onClick={()=>setPopup({label:'대상 작물 선택',ic:'🌿',type:'options',options:plotCrops.map(c=>({k:c.id,l:c.name,sub:`${c.section||''} · ${c.stage||''}`})),val:cropId,set:v=>setCropId(v)})}><div style={LBL}>{I.leaf(15,T.t)}<span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>대상 작물</span></div><span style={{flex:1,fontFamily:T.kr,fontSize:15,fontWeight:600,color:selCrop?T.ink:T.t}}>{selCrop?.name||'작물 선택'}</span>{I.chR(13,T.t)}</div>;
+  };
+  return<div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden',background:T.bg}}>
+    <div style={{flexShrink:0,display:'flex',alignItems:'center',padding:'8px 14px',justifyContent:'space-between',background:T.bg,borderBottom:`0.5px solid ${T.bd}`}}><div style={{display:'flex',alignItems:'center',gap:8,minWidth:50}}><button style={BI} onClick={()=>nav.pop()}>{I.chL(16,T.ink)}</button><button style={BI} onClick={goHome}>{I.home(16,T.ink)}</button></div><div style={{flex:1,display:'flex',justifyContent:'center'}}><Toggle mode={mode} onChange={onMode}/></div><div style={{minWidth:50,display:'flex',justifyContent:'flex-end'}}><button onClick={save} style={{background:T.J,color:'#fff',border:0,borderRadius:999,padding:'9px 20px',fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:T.kr,boxShadow:`0 3px 10px ${T.J}50`}}>저장</button></div></div>
+    <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
+      <div style={{padding:'14px 16px 10px'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><div style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.t,letterSpacing:1.2}}>NEW ENTRY · {fmtE(entryDate)}</div><input type="date" value={entryDate} onChange={e=>setEntryDate(e.target.value)} style={{background:'none',border:'none',outline:'none',fontSize:11,color:T.J,fontWeight:600,cursor:'pointer',fontFamily:T.kr}}/></div><div style={{fontFamily:T.kr,fontSize:28,fontWeight:700,color:T.ink,letterSpacing:-.5,marginTop:5}}>작업 기록</div></div>
+      <div style={{padding:'0 14px 14px',display:'flex',gap:7,flexWrap:'wrap'}}>{WT.map(w=>{const on=wtype===w.k;return<button key={w.k} onClick={()=>changeType(w.k)} style={{display:'flex',alignItems:'center',gap:5,padding:'9px 16px',borderRadius:999,border:on?'none':`1px solid ${T.bd}`,background:on?T.J:'#fff',cursor:'pointer',fontFamily:T.kr,fontSize:14,fontWeight:700,color:on?'#fff':T.ink,boxShadow:on?`0 2px 8px ${T.J}40`:undefined}}>{on&&<span style={{fontSize:13}}>✓</span>}{w.k}</button>;})}</div>
+      <div style={{margin:'0 14px 12px',...CARD}}>
+        <div style={{...ROW,cursor:'pointer'}} onClick={()=>setPopup({label:'필지 선택',ic:'📍',type:'options',options:data.plots.map(p=>({k:String(p.id),l:p.name,sub:plotCropList(p)})),val:plotId,set:changePlot})}><div style={LBL}>{I.pin(15,T.t)}<span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>필지</span></div><span style={{flex:1,fontFamily:T.kr,fontSize:15,fontWeight:600,color:plot?T.ink:T.t}}>{plot?.name||'선택하기'}</span>{I.chR(13,T.t)}</div>
+        {isSowing?<div style={{...ROW,cursor:'pointer'}} onClick={()=>setPopup({label:'파종할 작물 선택',ic:'🌱',type:'text',ph:'예) 사과 후지, 고추 청양',val:cropVal,set:setCropVal})}><div style={LBL}>{I.leaf(15,T.t)}<span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>파종 작물</span></div><span style={{flex:1,fontFamily:T.kr,fontSize:15,fontWeight:600,color:cropVal?T.ink:T.t}}>{cropVal||'작물명 입력'}</span>{I.chR(13,T.t)}</div>:renderCropRow()}
+        {curF.map((f,i)=><div key={i} style={{...(i<curF.length-1?ROW:ROW_L),cursor:'pointer'}} onClick={()=>setPopup({...f,type:'text'})}><div style={LBL}><span style={{fontSize:15}}>{f.ic}</span><span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>{f.l}</span></div><span style={{flex:1,fontFamily:T.kr,fontSize:15,fontWeight:600,color:f.val?T.ink:T.t}}>{f.val||'입력하기'}</span>{I.chR(13,T.t)}</div>)}
+      </div>
+      <div style={{margin:'0 14px 12px',...CARD}}>
+        <div style={{padding:'12px 16px',borderBottom:`0.5px solid ${T.dv}`}}><div style={{fontFamily:T.kr,fontSize:12,fontWeight:700,color:T.t,letterSpacing:.5,textTransform:'uppercase',marginBottom:10}}>오늘의 날씨</div><div style={{display:'flex',gap:6}}>{WX.map(w=>{const on=wx===w.k;return<button key={w.k} onClick={()=>setWx(w.k)} style={{flex:1,padding:'8px 4px',borderRadius:10,border:`1.5px solid ${on?T.J:T.bd}`,background:on?T.Js:'#FAFCFA',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}><span style={{fontSize:20}}>{w.e}</span><span style={{fontFamily:T.kr,fontSize:10,fontWeight:700,color:on?T.Ji:T.t}}>{w.l}</span></button>;})}</div></div>
+        <div style={{display:'flex',alignItems:'center',padding:'0 16px',minHeight:50}}><div style={LBL}><span style={{fontSize:15}}>🌡️</span><span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>기온</span></div><input value={temp} onChange={e=>setTemp(e.target.value)} placeholder="–" style={{width:60,border:'none',background:'none',outline:'none',fontFamily:T.kr,fontSize:15,fontWeight:600,color:T.ink,textAlign:'right'}}/><span style={{fontFamily:T.en,fontSize:13,color:T.s,marginRight:20}}>°C</span><div style={{width:1,height:18,background:T.bd,marginRight:20}}/><div style={{...LBL,width:'auto'}}><span style={{fontSize:15}}>💧</span><span style={{fontFamily:T.kr,fontSize:14,color:T.s}}>습도</span></div><input value={hum} onChange={e=>setHum(e.target.value)} placeholder="–" style={{width:60,border:'none',background:'none',outline:'none',fontFamily:T.kr,fontSize:15,fontWeight:600,color:T.ink,textAlign:'right'}}/><span style={{fontFamily:T.en,fontSize:13,color:T.s}}>%</span></div>
+      </div>
+      <div style={{margin:'0 14px 12px',...CARD,overflow:'visible'}}>
+        <div style={{padding:'14px 16px'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14}}><div style={{display:'flex',alignItems:'baseline',gap:8}}><span style={{fontFamily:T.kr,fontSize:17,fontWeight:700,color:T.ink}}>음성 메모</span><span style={{fontFamily:T.en,fontSize:10,fontWeight:600,color:T.t,letterSpacing:.5}}>VOICE MEMO</span></div>{sttOn&&<div style={{display:'flex',alignItems:'center',gap:5}}><span style={{width:7,height:7,borderRadius:999,background:T.red,display:'inline-block',animation:'pulse 1s infinite'}}/><span style={{fontFamily:T.en,fontSize:12,fontWeight:700,color:T.red}}>REC {fmtT(sttTime)}</span></div>}</div>
+          <div style={{display:'flex',alignItems:'center',gap:14,marginBottom:12}}><button onClick={sttOn?stopSTT:startSTT} style={{width:56,height:56,borderRadius:28,border:0,cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:sttOn?T.red:'rgba(60,60,67,.10)',boxShadow:sttOn?`0 0 0 7px ${T.red}22`:undefined,transition:'all .2s'}}>{I.mic(24,sttOn?'#fff':T.ink)}</button><div style={{flex:1,height:38,display:'flex',alignItems:'center',gap:2.5,overflow:'hidden'}}>{Array.from({length:34}).map((_,i)=>{const rec=sttOn&&i<Math.min(sttTime*2,34);return<div key={i} style={{width:3,height:rec?(5+Math.abs(Math.sin(i*.8))*22):4,borderRadius:2,background:rec?T.red:T.bd,flexShrink:0,animation:rec?`wave ${.25+i*.03}s ease-in-out infinite alternate`:undefined}}/>;})}</div>{sttOn&&<button onClick={stopSTT} style={{flexShrink:0,padding:'5px 11px',borderRadius:8,border:`1px solid ${T.red}50`,background:'#FFEBEE',color:T.red,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>중지</button>}</div>
+          {sttErr&&<div style={{padding:'8px 12px',background:'#FFEBEE',borderRadius:8,marginBottom:10,fontSize:12,color:T.red}}>⚠️ {sttErr}</div>}
+          {sttInt&&<div style={{padding:'7px 12px',background:'rgba(60,60,67,.06)',borderRadius:8,marginBottom:10,fontSize:12,color:T.s,fontStyle:'italic'}}>{sttInt}...</div>}
+          <div style={{background:'#F5F5F2',borderRadius:10,padding:'10px 12px'}}><div style={{fontFamily:T.mo,fontSize:9,color:T.t,letterSpacing:.8,marginBottom:5}}>AUTO TRANSCRIPT ·</div><textarea value={detail} onChange={e=>setDetail(e.target.value)} placeholder="말씀하시거나 직접 입력하세요..." rows={3} style={{width:'100%',border:'none',background:'none',outline:'none',fontFamily:T.kr,fontSize:13,color:T.ink,resize:'none',lineHeight:1.7,boxSizing:'border-box',padding:0}}/></div>
+        </div>
+      </div>
+      <div style={{margin:'0 14px 20px'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}><span style={{fontFamily:T.kr,fontSize:17,fontWeight:700,color:T.ink}}>사진 · 자동 태깅</span><span style={{fontFamily:T.mo,fontSize:10,color:T.t}}>{photos.length} / 10</span></div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+          {photos.map((p,i)=><div key={i} style={{position:'relative',aspectRatio:'1',borderRadius:12,overflow:'hidden',background:'#E8E8E4'}}><img src={p.url} alt="" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}}/><div style={{position:'absolute',bottom:6,left:6,background:'rgba(0,0,0,.54)',color:'#fff',padding:'2px 8px',borderRadius:999,fontFamily:T.kr,fontSize:10,fontWeight:600}}>#{p.tag}</div><button onClick={()=>setPhotos(pr=>pr.filter((_,j)=>j!==i))} style={{position:'absolute',top:6,right:6,width:22,height:22,borderRadius:11,background:'rgba(0,0,0,.48)',border:'1.5px solid rgba(255,255,255,.4)',color:'#fff',fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0}}>×</button></div>)}
+          {photos.length<10&&<button onClick={()=>camRef.current.click()} style={{aspectRatio:'1',borderRadius:12,border:`1.5px dashed ${T.bd}`,background:'#FAFCFA',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:7,cursor:'pointer'}}>{I.cam(24,T.s)}<span style={{fontFamily:T.kr,fontSize:11,fontWeight:600,color:T.s}}>사진 추가</span></button>}
+        </div>
+        <input ref={camRef} type="file" accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={readPhotos}/>
+        <input ref={galRef} type="file" accept="image/*" multiple style={{display:'none'}} onChange={readPhotos}/>
+      </div>
+    </div>
+    {popup&&<Popup popup={popup} onClose={()=>setPopup(null)}/>}
+  </div>;
+}
+function JHome({nav,mode,onMode,data,userName,onSearch,onBell,notifCount}){
+  const{diary,plots}=data;const recent=[...diary].sort((a,b)=>b.id-a.id).slice(0,3);
+  const now=new Date();
+  const days=['일','월','화','수','목','금','토'];
+  const dateStr=`${days[now.getDay()]} · ${now.getMonth()+1}월 ${now.getDate()}일`;
+  const displayName=userName||'농업인';
+  return<div style={{background:T.bg,flex:1,overflowY:'auto'}}>
+    <TopBar mode={mode} onMode={onMode} onBell={onBell} onSearch={onSearch} notifCount={notifCount}/>
+    <div style={{padding:'8px 14px 6px'}}><div style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.t,letterSpacing:1.2,textTransform:'uppercase'}}>{dateStr}</div><div style={{fontFamily:T.kr,fontSize:22,fontWeight:700,color:T.ink,letterSpacing:-.4,marginTop:3}}>오늘도 수고하셨어요,<br/>{displayName}님</div></div>
+    <div style={{margin:'4px 14px 10px',padding:'12px 14px',borderRadius:18,background:'linear-gradient(135deg,#EDF5EA,#EAF3F0)',border:`0.5px solid ${T.bd}`}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}><div><div style={{display:'flex',alignItems:'baseline',gap:8}}><span style={{fontFamily:T.en,fontSize:34,fontWeight:300,color:T.ink,letterSpacing:-1}}>18°</span><span style={{fontFamily:T.kr,fontSize:13,color:T.s}}>맑음 · 청도</span></div><div style={{display:'flex',gap:10,marginTop:4}}><span style={{fontSize:11,fontFamily:T.kr,color:T.s}}>최저 9° · 최고 22°</span><span style={{fontSize:11,fontFamily:T.kr,color:T.s}}>습도 54%</span></div></div>{I.sun(32,T.J)}</div></div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',padding:'0 14px 6px'}}><span style={{fontFamily:T.kr,fontSize:14,fontWeight:600,color:T.ink}}>내 필지 · {plots.length}곳</span><span onClick={()=>nav.push('all-plots')} style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.J,cursor:'pointer'}}>전체 ›</span></div>
+    <div style={{padding:'0 14px'}}>{plots.slice(0,3).map(p=><Card key={p.id} onClick={()=>nav.push('plot-detail',{plot:p})} style={{display:'flex',gap:10,alignItems:'center',cursor:'pointer'}}><Stripe w={60} h={60} label={plotMainCrop(p).split(' ')[0]} tone={p.tone}/><div style={{flex:1,minWidth:0}}><div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.ink}}>{p.name}</span><Chip tone="green" size="xs">{p.crops?.length||0}종</Chip></div><div style={{fontFamily:T.en,fontSize:10,color:T.t,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plotCropList(p)} · {p.area}</div></div>{I.chR(13,T.t)}</Card>)}</div>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',padding:'0 14px 6px'}}><span style={{fontFamily:T.kr,fontSize:14,fontWeight:600,color:T.ink}}>최근 작업</span><span onClick={()=>nav.push('all-logs')} style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.J,cursor:'pointer'}}>전체 ›</span></div>
+    <div style={{padding:'0 14px 14px'}}><div style={{background:T.card,borderRadius:14,border:`0.5px solid ${T.bd}`,overflow:'hidden'}}>{recent.map((r,i)=>{const pl=plots.find(p=>p.id===r.plotId);return<div key={r.id} onClick={()=>nav.push('log-detail',{log:r})} style={{display:'flex',alignItems:'center',padding:'10px 13px',borderBottom:i<recent.length-1?`0.5px solid ${T.dv}`:'none',cursor:'pointer'}}><div style={{marginRight:10}}><Chip tone={r.workType==='방제'?'red':r.workType==='시비'?'blue':'green'} size="xs">{r.workType}</Chip></div><div style={{flex:1,minWidth:0}}><div style={{fontFamily:T.kr,fontSize:13,fontWeight:600,color:T.ink}}>{pl?.name||'전체'}</div><div style={{fontFamily:T.kr,fontSize:11,color:T.s,marginTop:1}}>{r.detail.slice(0,32)}{r.detail.length>32?'...':''}</div></div><span style={{fontFamily:T.en,fontSize:10,color:T.t}}>{r.date.slice(5)}</span></div>;})} </div></div>
+  </div>;
+}
+function JCal({nav,mode,onMode,data}){
+  const [sel,setSel]=useState(today());
+  const wds=['일','월','화','수','목','금','토'];
+  const d=new Date(sel),y=d.getFullYear(),m=d.getMonth();
+  const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+  const lds=new Set(data.diary.map(e=>e.date));const dayLogs=data.diary.filter(e=>e.date===sel);
+  const go=(dy)=>{const nd=new Date(y,m+dy,1);setSel(`${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-01`);};
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <TopBar mode={mode} onMode={onMode} leading={<button style={BI} onClick={()=>go(-1)}>{I.chL(16,T.ink)}</button>} trailing={<button style={BI} onClick={()=>go(1)}>{I.chR(14,T.ink)}</button>}/>
+    <div style={{padding:'6px 14px 10px'}}><div style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.t,letterSpacing:1.2,textTransform:'uppercase'}}>{y} · {['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][m]}</div><div style={{fontFamily:T.kr,fontSize:22,fontWeight:700,color:T.ink,marginTop:2}}>{m+1}월</div></div>
+    <div style={{margin:'0 12px 12px',background:T.card,borderRadius:14,padding:12,border:`0.5px solid ${T.bd}`}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:4}}>{wds.map((d,i)=><div key={d} style={{textAlign:'center',fontFamily:T.en,fontSize:9,fontWeight:700,color:i===0?T.red:T.t,padding:'4px 0'}}>{d}</div>)}</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2}}>
+        {Array.from({length:first}).map((_,i)=><div key={'e'+i}/>)}
+        {Array.from({length:dim}).map((_,i)=>{const day=i+1,ds=`${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`,isT=ds===today(),isS=ds===sel,has=lds.has(ds),dow=new Date(y,m,day).getDay();return<div key={day} onClick={()=>setSel(ds)} style={{aspectRatio:'1',borderRadius:10,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:isS?(isT?T.J:'#E8F5E9'):'transparent',cursor:'pointer',border:isS&&!isT?`1.5px solid ${T.J}`:'none'}}><span style={{fontFamily:T.en,fontSize:13,fontWeight:isS?700:500,color:isT&&isS?'#fff':dow===0?T.red:T.ink}}>{day}</span>{has&&<div style={{width:4,height:4,borderRadius:2,background:isS?'#fff':T.J,marginTop:1}}/>}</div>;})}
+      </div>
+    </div>
+    <div style={{padding:'0 14px 10px'}}>
+      <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:8}}><span style={{fontFamily:T.kr,fontSize:15,fontWeight:700,color:T.ink}}>{sel.slice(5)} · {wds[new Date(sel).getDay()]}요일</span><button onClick={()=>nav.push('add-work',{date:sel})} style={{display:'flex',alignItems:'center',gap:4,background:T.J,color:'#fff',border:0,borderRadius:8,padding:'5px 10px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>{I.plus(14,'#fff')} 기록 추가</button></div>
+      {dayLogs.length===0?<Card style={{textAlign:'center',padding:20,color:T.s,fontSize:13}}>이 날의 작업 기록이 없습니다</Card>:dayLogs.map(r=>{const pl=data.plots.find(p=>p.id===r.plotId);return<Card key={r.id} onClick={()=>nav.push('log-detail',{log:r})} style={{cursor:'pointer'}}><div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}><Chip tone={r.workType==='방제'?'red':r.workType==='시비'?'blue':'green'} size="xs">{r.workType}</Chip><span style={{fontFamily:T.kr,fontSize:13,fontWeight:600,color:T.ink}}>{pl?.name||'전체'}</span></div><div style={{fontFamily:T.kr,fontSize:12,color:T.s}}>{r.detail.slice(0,50)}</div></Card>;})}
+    </div>
+  </div>;
+}
+function JMap({nav,mode,onMode,data}){
+  const total=data.plots.map(p=>parseInt(p.area.replace(/[^0-9]/g,''))||0).reduce((a,v)=>a+v,0);
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <TopBar mode={mode} onMode={onMode} leading={<button style={BI} onClick={()=>nav.push('add-plot')}>{I.plus(20,T.ink)}</button>} trailing={<button style={BI} onClick={()=>nav.push('all-plots')}>{I.filt(18,T.ink)}</button>}/>
+    <div style={{padding:'6px 14px 10px'}}><div style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.t,letterSpacing:1.2}}>FIELDS · 필지 관리</div><div style={{fontFamily:T.kr,fontSize:22,fontWeight:700,color:T.ink,marginTop:3}}>{data.plots.length}개 필지 <span style={{fontFamily:T.en,fontSize:13,fontWeight:400,color:T.s}}>{total.toLocaleString()}㎡</span></div></div>
+    <div style={{padding:'0 14px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}><span style={{fontFamily:T.kr,fontSize:14,fontWeight:600,color:T.ink}}>전체 필지</span><button onClick={()=>nav.push('add-plot')} style={{display:'flex',alignItems:'center',gap:4,background:T.J,color:'#fff',border:0,borderRadius:8,padding:'5px 10px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>{I.plus(13,'#fff')} 필지 추가</button></div>
+    <div style={{padding:'0 14px'}}>{data.plots.map(p=>{const dotC={1:T.J,2:T.L,3:'#8A6A20',4:T.J}[p.id]||T.J;return<Card key={p.id} onClick={()=>nav.push('plot-detail',{plot:p})} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer'}}><div style={{width:36,height:36,borderRadius:10,background:dotC+'18',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}><div style={{width:10,height:10,borderRadius:999,background:dotC}}/></div><div style={{flex:1,minWidth:0}}><div style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.ink}}>{p.name}</div><div style={{fontFamily:T.kr,fontSize:11,color:T.s,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plotCropList(p)} · {p.area}</div></div>{I.chR(13,T.t)}</Card>;})} <div style={{height:14}}/></div>
+  </div>;
+}
+function LogDetail({nav,data,params,goHome}){
+  const log=params?.log;if(!log)return null;
+  const pl=data.plots.find(p=>p.id===log.plotId);const wxObj=WX.find(w=>w.k===log.wx)||WX[0];
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <NavBar title="작업 일지 상세" onBack={()=>nav.pop()} onHome={goHome}/>
+    <div style={{padding:'10px 14px'}}>
+      <div style={{background:T.card,borderRadius:14,padding:14,border:`0.5px solid ${T.bd}`,marginBottom:10}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:10}}><div><div style={{fontFamily:T.en,fontSize:11,color:T.t}}>{log.date}</div><div style={{fontFamily:T.kr,fontSize:18,fontWeight:700,color:T.ink,marginTop:3}}>{pl?.name||'전체 구역'}</div></div><Chip tone={log.workType==='방제'?'red':log.workType==='시비'?'blue':'green'} size="sm">{log.workType}</Chip></div>{[{l:'작물',v:log.cropVal||plotMainCrop(pl)||'-'},{l:'필지',v:pl?.name||'-'},{l:'날씨',v:`${wxObj.e} ${wxObj.l}${log.temp?` · ${log.temp}°C`:''}`},{l:'습도',v:log.hum?`${log.hum}%`:'-'}].map((r,i)=><div key={i} style={{display:'flex',padding:'8px 0',borderBottom:i<3?`0.5px solid ${T.dv}`:'none'}}><span style={{fontFamily:T.kr,fontSize:13,color:T.s,width:52}}>{r.l}</span><span style={{fontFamily:T.kr,fontSize:13,fontWeight:600,color:T.ink}}>{r.v}</span></div>)}</div>
+      <Card><div style={{fontFamily:T.kr,fontSize:12,fontWeight:700,color:T.s,marginBottom:8}}>상세 내용</div><div style={{fontFamily:T.kr,fontSize:14,color:T.ink,lineHeight:1.7,whiteSpace:'pre-wrap'}}>{log.detail||'내용 없음'}</div></Card>
+    </div>
+  </div>;
+}
+function PlotDetail({nav,data,params,deletePlot,addCropToPlot,toast2,goHome}){
+  const p=params?.plot;if(!p)return null;
+  const [confirmDel,setConfirmDel]=useState(false);const [addCropOpen,setAddCropOpen]=useState(false);
+  const [newCrop,setNewCrop]=useState({name:'',section:'',area:'',planted:'',harvest:'',stage:'재배 중',status:'정상'});
+  const plot=data.plots.find(pl=>pl.id===p.id)||p;const crops=plot.crops||[];
+  const logs=data.diary.filter(d=>d.plotId===p.id).sort((a,b)=>b.id-a.id);
+  const STAGES=['파종 전','파종 중','재배 중','수확 예정','미경작'];
+  const addCrop=()=>{if(!newCrop.name.trim()){toast2&&toast2('작물명을 입력해주세요',false);return;}addCropToPlot&&addCropToPlot(plot.id,newCrop);setAddCropOpen(false);setNewCrop({name:'',section:'',area:'',planted:'',harvest:'',stage:'재배 중',status:'정상'});};
+  return<div style={{flex:1,overflowY:'auto',background:T.bg,position:'relative'}}>
+    <NavBar title={plot.name} onBack={()=>nav.pop()} onHome={goHome} trailing={<button onClick={()=>nav.push('add-work',{plotId:p.id})} style={{background:T.J,color:'#fff',border:0,borderRadius:8,padding:'5px 11px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr,display:'flex',alignItems:'center',gap:4}}>{I.plus(13,'#fff')} 기록</button>}/>
+    <div style={{padding:'10px 14px'}}>
+      <div style={{background:'linear-gradient(135deg,#EDF5EA,#EAF3F0)',borderRadius:16,padding:14,border:`0.5px solid ${T.bd}`,marginBottom:12}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}><div><div style={{fontFamily:T.kr,fontSize:22,fontWeight:700,color:T.ink}}>{plot.name}</div><div style={{fontFamily:T.kr,fontSize:13,color:T.s,marginTop:3}}>{plot.zone}구역 · {plot.area}</div></div><Chip tone="green" size="sm">{crops.length}종</Chip></div>{plot.address&&<div style={{display:'flex',alignItems:'center',gap:6}}>{I.pin(13,T.J)}<span style={{fontFamily:T.kr,fontSize:12,color:T.Ji}}>{plot.address}</span></div>}{plot.note&&<div style={{fontFamily:T.kr,fontSize:12,color:T.s,marginTop:8,paddingTop:8,borderTop:`0.5px solid rgba(60,60,67,.08)`}}>{plot.note}</div>}</div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}><div style={{fontFamily:T.kr,fontSize:16,fontWeight:700,color:T.ink}}>재배 작물 <span style={{fontFamily:T.en,fontSize:11,color:T.t,fontWeight:400}}>{crops.length}종</span></div><button onClick={()=>setAddCropOpen(true)} style={{background:T.J,color:'#fff',border:0,borderRadius:8,padding:'5px 11px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr,display:'flex',alignItems:'center',gap:4}}>{I.plus(13,'#fff')} 작물 추가</button></div>
+      {crops.length===0&&<div style={{background:'#F5F5F2',borderRadius:12,padding:20,textAlign:'center',marginBottom:12}}><div style={{fontSize:28,marginBottom:8}}>🌱</div><div style={{fontFamily:T.kr,fontSize:14,color:T.s}}>등록된 작물이 없습니다</div><button onClick={()=>setAddCropOpen(true)} style={{marginTop:12,padding:'8px 18px',borderRadius:8,border:`1.5px dashed ${T.J}`,background:T.Js,color:T.Ji,fontFamily:T.kr,fontSize:13,fontWeight:700,cursor:'pointer'}}>+ 첫 작물 등록하기</button></div>}
+      {crops.map(c=>{const cLogs=logs.filter(l=>l.cropId===c.id);return<div key={c.id} style={{background:T.card,borderRadius:14,border:`0.5px solid ${T.bd}`,marginBottom:10,overflow:'hidden'}}>
+        <div style={{background:`linear-gradient(135deg,${T.J}15,${T.J}08)`,padding:'12px 14px',borderBottom:`0.5px solid ${T.bd}`}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}><div style={{flex:1,minWidth:0}}><div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}><span style={{fontFamily:T.kr,fontSize:16,fontWeight:700,color:T.ink}}>{c.name}</span><Chip tone={c.warn?'red':'green'} size="xs">{c.status}</Chip><Chip tone="neutral" size="xs">{c.stage}</Chip></div><div style={{fontFamily:T.kr,fontSize:12,color:T.s,marginTop:4}}>{c.section} · {c.area}</div></div><button onClick={()=>nav.push('add-work',{plotId:p.id,cropId:c.id,workType:'관수'})} style={{flexShrink:0,background:'#fff',border:`1px solid ${T.bd}`,borderRadius:7,padding:'4px 10px',fontSize:12,fontWeight:700,color:T.J,cursor:'pointer',fontFamily:T.kr,display:'flex',alignItems:'center',gap:4}}>{I.plus(12,T.J)} 기록</button></div></div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:1,background:T.bd}}>{[{l:'파종일',v:c.planted||'-'},{l:'수확예정',v:c.harvest||'-'}].map((x,i)=><div key={i} style={{background:'#fff',padding:'9px 12px'}}><div style={{fontFamily:T.en,fontSize:9,color:T.t,marginBottom:2}}>{x.l}</div><div style={{fontFamily:T.kr,fontSize:12,fontWeight:700,color:T.ink}}>{x.v}</div></div>)}</div>
+        {cLogs.length>0&&<div style={{padding:'8px 14px',background:'#FAFCFA'}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.t,marginBottom:6,textTransform:'uppercase',letterSpacing:.4}}>최근 작업</div>{cLogs.slice(0,2).map(r=><div key={r.id} onClick={()=>nav.push('log-detail',{log:r})} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',cursor:'pointer',borderTop:`0.5px solid ${T.dv}`}}><Chip tone={r.workType==='방제'?'red':r.workType==='시비'?'blue':'green'} size="xs">{r.workType}</Chip><span style={{flex:1,fontFamily:T.kr,fontSize:12,color:T.s,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.detail.slice(0,35)}</span><span style={{fontFamily:T.en,fontSize:10,color:T.t,flexShrink:0}}>{r.date.slice(5)}</span></div>)}</div>}
+      </div>;})}
+      <div style={{marginTop:16,marginBottom:8}}>{confirmDel?<div style={{background:'#FFF3F0',border:`1px solid ${T.red}40`,borderRadius:14,padding:16}}><div style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.red,marginBottom:6}}>정말 삭제하시겠습니까?</div><div style={{display:'flex',gap:8}}><button onClick={()=>setConfirmDel(false)} style={{flex:1,padding:'11px',borderRadius:10,border:`1px solid ${T.bd}`,background:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.s,cursor:'pointer'}}>취소</button><button onClick={()=>deletePlot&&deletePlot(p.id)} style={{flex:1,padding:'11px',borderRadius:10,border:'none',background:T.red,color:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,cursor:'pointer'}}>삭제 확인</button></div></div>:<button onClick={()=>setConfirmDel(true)} style={{width:'100%',padding:'13px',borderRadius:12,border:`1px solid ${T.red}50`,background:'#FFF5F5',color:T.red,fontFamily:T.kr,fontSize:14,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}}>🗑 이 필지 삭제</button>}</div>
+    </div>
+    {addCropOpen&&<div onClick={e=>e.target===e.currentTarget&&setAddCropOpen(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,.46)',zIndex:400,display:'flex',alignItems:'flex-end'}}><div style={{width:'100%',background:'#fff',borderRadius:'22px 22px 0 0',padding:'0 18px 28px',maxHeight:'90%',overflowY:'auto'}}><div style={{width:38,height:4,background:'rgba(0,0,0,.14)',borderRadius:2,margin:'13px auto 8px'}}/><div style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0 14px',borderBottom:`0.5px solid ${T.bd}`,marginBottom:14}}><span style={{fontSize:20}}>🌱</span><span style={{fontFamily:T.kr,fontSize:17,fontWeight:700,color:T.ink}}>작물 추가</span></div>{[{l:'작물명 *',k:'name',ph:'예) 사과 후지'},{l:'재배 구역',k:'section',ph:'예) A구역'},{l:'면적',k:'area',ph:'예) 300㎡'},{l:'파종일',k:'planted',type:'date'},{l:'수확 예정',k:'harvest',type:'date'}].map(f=><div key={f.k} style={{marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:5,textTransform:'uppercase',letterSpacing:.3}}>{f.l}</div><input type={f.type||'text'} value={newCrop[f.k]} onChange={e=>setNewCrop(p=>({...p,[f.k]:e.target.value}))} placeholder={f.ph||''} style={{width:'100%',padding:'11px 12px',border:`1.5px solid ${T.bd}`,borderRadius:9,fontSize:14,color:T.ink,background:'#FAFCFA',outline:'none',fontFamily:T.kr,boxSizing:'border-box'}}/></div>)}<div style={{marginBottom:14}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:8,textTransform:'uppercase',letterSpacing:.3}}>재배 단계</div><div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{STAGES.map(s=><button key={s} onClick={()=>setNewCrop(p=>({...p,stage:s}))} style={{padding:'6px 12px',borderRadius:999,border:newCrop.stage===s?`1.5px solid ${T.J}`:`0.5px solid ${T.bd}`,background:newCrop.stage===s?T.Js:'#fff',fontFamily:T.kr,fontSize:12,fontWeight:700,color:newCrop.stage===s?T.Ji:T.s,cursor:'pointer'}}>{s}</button>)}</div></div><div style={{display:'flex',gap:8}}><button onClick={()=>setAddCropOpen(false)} style={{flex:1,padding:'13px',borderRadius:11,border:`1px solid ${T.bd}`,background:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.s,cursor:'pointer'}}>취소</button><button onClick={addCrop} style={{flex:2,padding:'13px',borderRadius:11,border:'none',background:T.J,color:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,cursor:'pointer'}}>작물 추가</button></div></div></div>}
+  </div>;
+}
+function AllLogs({nav,data,goHome}){
+  const [filter,setFilter]=useState('전체');const types=['전체',...WT.map(w=>w.k)];
+  const logs=[...data.diary].sort((a,b)=>b.id-a.id).filter(l=>filter==='전체'||l.workType===filter);
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <NavBar title="전체 작업 기록" onBack={()=>nav.pop()} onHome={goHome}/>
+    <div style={{padding:'8px 14px'}}><div style={{display:'flex',gap:6,overflowX:'auto',marginBottom:12}}>{types.map(t=><button key={t} onClick={()=>setFilter(t)} style={{padding:'6px 12px',borderRadius:999,border:filter===t?`1.5px solid ${T.J}`:`0.5px solid ${T.bd}`,background:filter===t?T.Js:'#fff',fontFamily:T.kr,fontSize:12,fontWeight:700,color:filter===t?T.Ji:T.s,cursor:'pointer',whiteSpace:'nowrap'}}>{t}</button>)}</div>{logs.map(r=>{const pl=data.plots.find(p=>p.id===r.plotId);return<Card key={r.id} onClick={()=>nav.push('log-detail',{log:r})} style={{cursor:'pointer'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}><div style={{display:'flex',alignItems:'center',gap:8}}><Chip tone={r.workType==='방제'?'red':r.workType==='시비'?'blue':'green'} size="xs">{r.workType}</Chip><span style={{fontFamily:T.kr,fontSize:13,fontWeight:600,color:T.ink}}>{pl?.name||'전체'}</span></div><span style={{fontFamily:T.en,fontSize:10,color:T.t}}>{r.date}</span></div><div style={{fontFamily:T.kr,fontSize:12,color:T.s}}>{r.detail.slice(0,55)}</div></Card>;})} </div>
+  </div>;
+}
+function AllPlots({nav,data,deletePlot,goHome}){
+  const [selId,setSelId]=useState(null);
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <NavBar title="전체 필지" onBack={()=>nav.pop()} onHome={goHome} trailing={<button onClick={()=>nav.push('add-plot')} style={{background:T.J,color:'#fff',border:0,borderRadius:8,padding:'5px 11px',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr,display:'flex',alignItems:'center',gap:3}}>{I.plus(14,'#fff')} 추가</button>}/>
+    <div style={{padding:'8px 14px'}}>{data.plots.map(p=><div key={p.id} style={{marginBottom:8}}><Card style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',marginBottom:0}} onClick={()=>nav.push('plot-detail',{plot:p})}><Stripe w={52} h={52} label={plotMainCrop(p).split(' ')[0]} tone={p.tone}/><div style={{flex:1,minWidth:0}}><div style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.ink}}>{p.name}</div><div style={{fontFamily:T.kr,fontSize:12,color:T.s,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{plotCropList(p)} · {p.area}</div></div><button onClick={e=>{e.stopPropagation();setSelId(selId===p.id?null:p.id);}} style={{background:'#FFF5F5',border:`1px solid ${T.red}40`,borderRadius:7,padding:'4px 8px',color:T.red,fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>삭제</button></Card>{selId===p.id&&<div style={{background:'#FFF3F0',border:`1px solid ${T.red}40`,borderRadius:12,padding:'12px 14px',marginTop:4}}><div style={{fontFamily:T.kr,fontSize:13,color:T.ink,marginBottom:10}}><b>'{p.name}'</b>을 삭제하시겠습니까?</div><div style={{display:'flex',gap:8}}><button onClick={()=>setSelId(null)} style={{flex:1,padding:'9px',borderRadius:9,border:`1px solid ${T.bd}`,background:'#fff',fontFamily:T.kr,fontSize:13,fontWeight:700,color:T.s,cursor:'pointer'}}>취소</button><button onClick={()=>{deletePlot&&deletePlot(p.id);setSelId(null);}} style={{flex:1,padding:'9px',borderRadius:9,border:'none',background:T.red,color:'#fff',fontFamily:T.kr,fontSize:13,fontWeight:700,cursor:'pointer'}}>삭제 확인</button></div></div>}</div>)}</div>
+  </div>;
+}
+function AddPlot({nav,onSave,toast2,goHome}){
+  const [name,setName]=useState('');const [area,setArea]=useState('');const [zone,setZone]=useState('');const [tone,setTone]=useState('green');const [note,setNote]=useState('');
+  const [address,setAddress]=useState('');
+  const save=()=>{if(!name.trim()){toast2&&toast2('필지명을 입력해주세요',false);return;}onSave({id:mkId(),name:name.trim(),crop:'',area:area||'미입력',zone:zone||'미지정',planted:'-',harvest:'-',stage:'재배 중',day:'-',tone,status:'정상',warn:false,note:note.trim(),lat:null,lon:null,address:address,crops:[]});};
+  const toneMap={green:T.J,soil:'#8A6A20',amber:T.L,sky:'#3A6AA0'};
+  return<div style={{flex:1,overflowY:'auto',background:T.bg,position:'relative'}}>
+    <NavBar title="필지 추가" onBack={()=>nav.pop()} onHome={goHome} trailing={<button onClick={save} style={{background:T.J,color:'#fff',border:0,borderRadius:8,padding:'5px 14px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>저장</button>}/>
+    <div style={{padding:'10px 14px 80px'}}>
+      {[{l:'필지명 *',v:name,s:setName,ph:'예) 큰밭, 윗논'},{l:'면적',v:area,s:setArea,ph:'예) 1,200㎡'},{l:'구역',v:zone,s:setZone,ph:'예) A-1'}].map(f=><div key={f.l} style={{marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:5,textTransform:'uppercase',letterSpacing:.3}}>{f.l}</div><input value={f.v} onChange={e=>f.s(e.target.value)} placeholder={f.ph} style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${T.bd}`,borderRadius:9,fontSize:14,color:T.ink,background:'#FAFCFA',outline:'none',fontFamily:T.kr,boxSizing:'border-box'}}/></div>)}
+      <div style={{marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:5,textTransform:'uppercase',letterSpacing:.3}}>주소/위치</div><input value={address} onChange={e=>setAddress(e.target.value)} placeholder="주소를 입력하세요" style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${T.bd}`,borderRadius:9,fontSize:14,color:T.ink,background:'#FAFCFA',outline:'none',fontFamily:T.kr,boxSizing:'border-box'}}/></div>
+      <div style={{marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:8,textTransform:'uppercase',letterSpacing:.3}}>색상 테마</div><div style={{display:'flex',gap:8}}>{Object.entries(toneMap).map(([t,c])=><button key={t} onClick={()=>setTone(t)} style={{flex:1,padding:'10px 4px',borderRadius:10,border:tone===t?`2px solid ${c}`:`1px solid ${T.bd}`,background:tone===t?c+'18':'#fff',cursor:'pointer',fontFamily:T.kr,fontSize:11,fontWeight:700,color:tone===t?c:T.s,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}><div style={{width:20,height:20,borderRadius:999,background:c,opacity:tone===t?1:0.35}}/>{t}</button>)}</div></div>
+      <button onClick={save} style={{width:'100%',padding:'14px',borderRadius:12,border:'none',background:T.J,color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>📍 필지 저장</button>
+    </div>
+  </div>;
+}
+function LHome({nav,mode,onMode,data,onSearch,onBell,notifCount}){
+  const{ledger}=data;const mI=ledger.filter(l=>l.type==='income').reduce((a,l)=>a+l.amount,0),mE=ledger.filter(l=>l.type==='expense').reduce((a,l)=>a+l.amount,0);
+  const recent=[...ledger].sort((a,b)=>b.id-a.id).slice(0,4);
+  const bars=[{m:'11',i:28,e:60},{m:'12',i:42,e:35},{m:'01',i:18,e:55},{m:'02',i:30,e:40},{m:'03',i:65,e:35},{m:'04',i:88,e:38}];
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <TopBar mode={mode} onMode={onMode} onBell={onBell} onSearch={onSearch} notifCount={notifCount}/>
+    <div style={{padding:'6px 14px 8px'}}><div style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.t,letterSpacing:1.2,textTransform:'uppercase'}}>APR 2026 · 4월 결산</div><div style={{fontFamily:T.kr,fontSize:22,fontWeight:700,color:T.ink,letterSpacing:-.4,marginTop:3}}>이번달 순이익<br/><span style={{color:T.L}}>+ ₩ {fmt(mI-mE)}</span></div></div>
+    <div style={{margin:'0 14px 10px',display:'flex',gap:8}}>{[{l:'수입',v:mI,c:'#1C551C'},{l:'지출',v:mE,c:T.red}].map((s,i)=><div key={i} style={{flex:1,background:T.card,borderRadius:13,padding:'12px',border:`0.5px solid ${T.bd}`}}><div style={{fontFamily:T.kr,fontSize:11,color:T.s,fontWeight:600,marginBottom:5}}>{s.l}</div><div style={{fontFamily:T.en,fontSize:17,fontWeight:700,color:s.c}}>₩ {fmt(s.v)}</div></div>)}</div>
+    <div style={{margin:'0 14px 10px',background:T.card,borderRadius:14,padding:12,border:`0.5px solid ${T.bd}`}}><div style={{fontFamily:T.kr,fontSize:13,fontWeight:600,color:T.ink,marginBottom:10}}>현금흐름 6M</div><svg width="100%" height="100" viewBox="0 0 310 100">{bars.map((d,i)=>{const x=8+i*50;return<g key={i}><rect x={x} y={82-d.i} width="14" height={d.i} fill={T.J} rx="2"/><rect x={x+15} y={82-d.e} width="14" height={d.e} fill={T.red} rx="2" opacity=".8"/><text x={x+15} y="97" textAnchor="middle" fontFamily={T.en} fontSize="9" fill={T.t}>{d.m}</text></g>;})} <line x1="0" y1="82" x2="310" y2="82" stroke={T.bd}/></svg></div>
+    <div style={{padding:'0 14px 6px',display:'flex',justifyContent:'space-between'}}><span style={{fontFamily:T.kr,fontSize:14,fontWeight:600,color:T.ink}}>최근 거래</span><span onClick={()=>nav.push('all-txns')} style={{fontFamily:T.en,fontSize:11,fontWeight:600,color:T.L,cursor:'pointer'}}>전체 ›</span></div>
+    <div style={{padding:'0 14px'}}><div style={{background:T.card,borderRadius:14,border:`0.5px solid ${T.bd}`,overflow:'hidden'}}>{recent.map((r,i)=><div key={r.id} onClick={()=>nav.push('txn-detail',{txn:r})} style={{display:'flex',alignItems:'center',padding:'10px 12px',borderBottom:i<recent.length-1?`0.5px solid ${T.dv}`:'none',cursor:'pointer'}}><div style={{width:30,height:30,borderRadius:9,background:'rgba(60,60,67,.06)',display:'flex',alignItems:'center',justifyContent:'center',marginRight:10}}>{r.type==='income'?I.aD(12,'#1C551C'):I.aU(12,T.red)}</div><div style={{flex:1,minWidth:0}}><div style={{fontFamily:T.kr,fontSize:13,fontWeight:600,color:T.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.name}</div><div style={{fontFamily:T.kr,fontSize:11,color:T.s,marginTop:1}}>{r.cat}</div></div><div style={{fontFamily:T.en,fontSize:13,fontWeight:700,color:r.type==='income'?'#1C551C':T.ink}}>{r.type==='income'?'+':'-'}₩{fmt(r.amount)}</div></div>)}</div></div>
+    <div style={{height:14}}/>
+  </div>;
+}
+function LAddTxn({nav,onSave,toast2,goHome}){
+  const [type,setType]=useState('expense');const [amount,setAmount]=useState('');const [name,setName]=useState('');const [cat,setCat]=useState('비료/퇴비');const [pay,setPay]=useState('카드');const [vendor,setVendor]=useState('');const [photo,setPhoto]=useState(null);
+  const camRef=useRef();const galRef=useRef();
+  const readFile=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{setPhoto(ev.target.result);toast2&&toast2('사진이 첨부되었습니다');};r.readAsDataURL(f);e.target.value='';};
+  const save=()=>{if(!name.trim()||!amount){toast2&&toast2('항목명과 금액을 입력해주세요',false);return;}onSave({id:mkId(),date:today(),type,name,amount:parseInt(amount)||0,cat,pay,vendor,photo});};
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <NavBar title="거래 추가" onBack={()=>nav.pop()} onHome={goHome} trailing={<button onClick={save} style={{background:T.L,color:'#fff',border:0,borderRadius:8,padding:'5px 14px',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>저장</button>}/>
+    <input ref={camRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={readFile}/><input ref={galRef} type="file" accept="image/*" style={{display:'none'}} onChange={readFile}/>
+    <div style={{padding:'10px 14px 90px'}}>
+      <div style={{marginBottom:16}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:8,textTransform:'uppercase',letterSpacing:.3}}>📷 영수증 사진</div>{photo?<div style={{position:'relative',borderRadius:12,overflow:'hidden',border:`1px solid ${T.bd}`}}><img src={photo} alt="영수증" style={{width:'100%',maxHeight:180,objectFit:'cover',display:'block'}}/><button onClick={()=>setPhoto(null)} style={{position:'absolute',top:8,right:8,background:'rgba(200,40,40,.8)',color:'#fff',border:'none',borderRadius:8,padding:'5px 10px',fontSize:11,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>삭제</button></div>:<div style={{display:'flex',gap:8}}><button onClick={()=>camRef.current.click()} style={{flex:1,padding:'14px 10px',borderRadius:12,border:`1.5px dashed ${T.L}60`,background:T.Ls,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:8,fontFamily:T.kr}}><div style={{width:42,height:42,borderRadius:21,background:T.L,display:'flex',alignItems:'center',justifyContent:'center'}}>{I.cam(20,'#fff')}</div><div style={{fontSize:13,fontWeight:700,color:T.Li}}>카메라 촬영</div></button><button onClick={()=>galRef.current.click()} style={{flex:1,padding:'14px 10px',borderRadius:12,border:`1.5px dashed ${T.bd}`,background:'#FAFCFA',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',gap:8,fontFamily:T.kr}}><div style={{width:42,height:42,borderRadius:21,background:'rgba(60,60,67,.08)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}>🖼️</div><div style={{fontSize:13,fontWeight:700,color:T.ink}}>갤러리 선택</div></button></div>}</div>
+      <div style={{display:'flex',gap:8,marginBottom:14}}>{[{k:'expense',l:'💸 지출',c:T.red,bg:'#FFEBEE',bc:'#EF9A9A'},{k:'income',l:'💵 수입',c:'#1C551C',bg:'#E8F5E9',bc:'#A5D6A7'}].map(t=><button key={t.k} onClick={()=>{setType(t.k);setCat(t.k==='expense'?'비료/퇴비':'농산물 판매');}} style={{flex:1,padding:11,borderRadius:11,border:type===t.k?`1.5px solid ${t.bc}`:`0.5px solid ${T.bd}`,background:type===t.k?t.bg:'#fff',color:type===t.k?t.c:T.s,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>{t.l}</button>)}</div>
+      <div style={{background:T.card,borderRadius:12,padding:'14px',border:`0.5px solid ${T.bd}`,marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:6}}>{type==='expense'?'지출':'수입'} 금액 (원)</div><div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:22,color:'#C0C0C0'}}>₩</span><input type="number" inputMode="numeric" placeholder="0" value={amount} onChange={e=>setAmount(e.target.value)} style={{flex:1,fontSize:28,fontWeight:900,color:type==='expense'?T.red:'#1C551C',border:'none',background:'none',outline:'none',fontFamily:T.en,textAlign:'right',letterSpacing:-1}}/></div>{amount&&<div style={{fontFamily:T.en,fontSize:12,color:T.s,marginTop:4,textAlign:'right'}}>{parseInt(amount).toLocaleString()}원</div>}</div>
+      {[{l:'항목명',v:name,s:setName,ph:type==='expense'?'예) 비료 20포':'예) 사과 판매'},{l:'거래처',v:vendor,s:setVendor,ph:'예) 한국농자재'}].map(f=><div key={f.l} style={{marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:5,textTransform:'uppercase',letterSpacing:.3}}>{f.l}</div><input value={f.v} onChange={e=>f.s(e.target.value)} placeholder={f.ph} style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${T.bd}`,borderRadius:9,fontSize:14,color:T.ink,background:'#FAFCFA',outline:'none',fontFamily:T.kr,boxSizing:'border-box'}}/></div>)}
+      <div style={{marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:5,textTransform:'uppercase',letterSpacing:.3}}>카테고리</div><select value={cat} onChange={e=>setCat(e.target.value)} style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${T.bd}`,borderRadius:9,fontSize:14,color:T.ink,background:'#FAFCFA',outline:'none',fontFamily:T.kr,appearance:'none',boxSizing:'border-box'}}>{(type==='expense'?CATS_E:CATS_I).map(o=><option key={o} value={o}>{o}</option>)}</select></div>
+      <div style={{marginBottom:12}}><div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:8,textTransform:'uppercase',letterSpacing:.3}}>결제 수단</div><div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:5}}>{PAY.map(p=><button key={p} onClick={()=>setPay(p)} style={{padding:'8px 4px',borderRadius:8,border:pay===p?`1.5px solid ${T.L}`:`0.5px solid ${T.bd}`,background:pay===p?T.Ls:'#fff',fontSize:12,fontWeight:600,color:pay===p?T.Li:T.s,cursor:'pointer',fontFamily:T.kr,textAlign:'center'}}>{p}</button>)}</div></div>
+      <button onClick={save} style={{width:'100%',padding:'14px',borderRadius:12,border:'none',background:T.L,color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer',fontFamily:T.kr,marginTop:4}}>💾 거래 저장</button>
+    </div>
+  </div>;
+}
+function AllTxns({nav,data,goHome}){
+  const [filter,setFilter]=useState('전체');
+  const txns=[...data.ledger].sort((a,b)=>b.id-a.id).filter(t=>filter==='전체'||(filter==='수입'&&t.type==='income')||(filter==='지출'&&t.type==='expense'));
+  const totI=data.ledger.filter(l=>l.type==='income').reduce((a,l)=>a+l.amount,0),totE=data.ledger.filter(l=>l.type==='expense').reduce((a,l)=>a+l.amount,0);
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <NavBar title="전체 거래 내역" onBack={()=>nav.pop()} onHome={goHome}/>
+    <div style={{padding:'8px 14px'}}><div style={{background:'linear-gradient(135deg,#1E3A20,#2E5A30)',color:'#fff',borderRadius:14,padding:'14px',marginBottom:10}}><div style={{fontSize:11,opacity:.75,fontFamily:T.en,marginBottom:4}}>순이익</div><div style={{fontFamily:T.en,fontSize:24,fontWeight:900,letterSpacing:-1}}>{totI-totE>=0?'+':''}{fmt(totI-totE)}원</div></div><div style={{display:'flex',gap:6,marginBottom:10}}>{['전체','수입','지출'].map(f=><button key={f} onClick={()=>setFilter(f)} style={{flex:1,padding:'8px',borderRadius:8,border:filter===f?`1.5px solid ${T.L}`:`0.5px solid ${T.bd}`,background:filter===f?T.Ls:'#fff',color:filter===f?T.Li:T.s,fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>{f}</button>)}</div>{txns.map(r=><Card key={r.id} onClick={()=>nav.push('txn-detail',{txn:r})} style={{cursor:'pointer',display:'flex',alignItems:'center',gap:10}}><div style={{width:36,height:36,borderRadius:10,background:r.type==='income'?'#E8F5E9':'#FFEBEE',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{r.type==='income'?I.aD(13,'#1C551C'):I.aU(13,T.red)}</div><div style={{flex:1,minWidth:0}}><div style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.name}</div><div style={{fontFamily:T.kr,fontSize:11,color:T.s,marginTop:2}}>{r.date} · {r.cat}</div></div><div style={{fontFamily:T.en,fontSize:14,fontWeight:700,color:r.type==='income'?'#1C551C':T.ink}}>{r.type==='income'?'+':'-'}₩{fmt(r.amount)}</div></Card>)}</div>
+  </div>;
+}
+function TxnDetail({nav,params,goHome}){
+  const r=params?.txn;if(!r)return null;
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <NavBar title="거래 상세" onBack={()=>nav.pop()} onHome={goHome}/>
+    <div style={{padding:'10px 14px'}}><div style={{background:r.type==='income'?'linear-gradient(135deg,#1E3A20,#2E6A30)':'linear-gradient(135deg,#3A1010,#6A2020)',color:'#fff',borderRadius:16,padding:18,marginBottom:12}}><div style={{fontFamily:T.en,fontSize:11,opacity:.75,marginBottom:6}}>{r.type==='income'?'INCOME':'EXPENSE'} · {r.date}</div><div style={{fontFamily:T.kr,fontSize:22,fontWeight:700,marginBottom:4}}>{r.name}</div><div style={{fontFamily:T.en,fontSize:28,fontWeight:900,letterSpacing:-1}}>{r.type==='income'?'+':'-'}₩{fmt(r.amount)}</div></div><Card>{[{l:'카테고리',v:r.cat},{l:'결제 수단',v:r.pay||'-'},{l:'거래처',v:r.vendor||'-'}].map((x,i,a)=><div key={x.l} style={{display:'flex',padding:'10px 0',borderBottom:i<a.length-1?`0.5px solid ${T.dv}`:'none'}}><span style={{fontFamily:T.kr,fontSize:13,color:T.s,width:68}}>{x.l}</span><span style={{fontFamily:T.kr,fontSize:13,fontWeight:600,color:T.ink,flex:1}}>{x.v}</span></div>)}</Card></div>
+  </div>;
+}
+function PnlScreen({data,mode,onMode}){
+  const{ledger}=data;
+  const now=new Date();
+  const months=Array.from({length:6},(_,i)=>{const d=new Date(now.getFullYear(),now.getMonth()-5+i,1);return{key:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`,label:`${d.getMonth()+1}월`};});
+  const byMonth=months.map(m=>{const inc=ledger.filter(l=>l.type==='income'&&l.date.startsWith(m.key)).reduce((a,l)=>a+l.amount,0);const exp=ledger.filter(l=>l.type==='expense'&&l.date.startsWith(m.key)).reduce((a,l)=>a+l.amount,0);return{...m,inc,exp,net:inc-exp};});
+  const totI=ledger.filter(l=>l.type==='income').reduce((a,l)=>a+l.amount,0);
+  const totE=ledger.filter(l=>l.type==='expense').reduce((a,l)=>a+l.amount,0);
+  const catExp=CATS_E.map(c=>({cat:c,amt:ledger.filter(l=>l.type==='expense'&&l.cat===c).reduce((a,l)=>a+l.amount,0)})).filter(c=>c.amt>0).sort((a,b)=>b.amt-a.amt);
+  const catInc=CATS_I.map(c=>({cat:c,amt:ledger.filter(l=>l.type==='income'&&l.cat===c).reduce((a,l)=>a+l.amount,0)})).filter(c=>c.amt>0).sort((a,b)=>b.amt-a.amt);
+  const maxBar=Math.max(...byMonth.map(m=>Math.max(m.inc,m.exp)),1);
+  return<div style={{flex:1,overflowY:'auto',background:T.bg}}>
+    <TopBar mode={mode} onMode={onMode} leading={<div/>} trailing={<div/>}/>
+    <div style={{background:'linear-gradient(135deg,#1B3A28,#2E5A3A)',padding:'18px 20px 24px'}}>
+      <div style={{fontFamily:T.kr,fontSize:11,color:'rgba(255,255,255,.6)',letterSpacing:.8,marginBottom:4}}>연간 손익</div>
+      <div style={{fontFamily:T.en,fontSize:30,fontWeight:900,color:'#fff',letterSpacing:-1}}>{totI-totE>=0?'+':''}{fmt(totI-totE)}<span style={{fontSize:14,fontWeight:500,marginLeft:4}}>원</span></div>
+      <div style={{display:'flex',gap:16,marginTop:12}}>
+        {[{l:'총 수입',v:totI,c:'#80EE98'},{l:'총 지출',v:totE,c:'#FF9B9B'}].map(s=><div key={s.l}><div style={{fontFamily:T.kr,fontSize:11,color:'rgba(255,255,255,.6)'}}>{s.l}</div><div style={{fontFamily:T.en,fontSize:16,fontWeight:700,color:s.c}}>₩{fmt(s.v)}</div></div>)}
+      </div>
+    </div>
+    <div style={{margin:'14px 14px 0',background:T.card,borderRadius:16,padding:'16px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+      <div style={{fontFamily:T.kr,fontSize:13,fontWeight:700,color:T.ink,marginBottom:14}}>월별 수입/지출 추이</div>
+      <div style={{display:'flex',alignItems:'flex-end',gap:6,height:90}}>
+        {byMonth.map(m=><div key={m.key} style={{flex:1,display:'flex',gap:2,alignItems:'flex-end',flexDirection:'row'}}>
+          <div style={{flex:1,background:T.J,borderRadius:'4px 4px 0 0',height:Math.max(m.inc/maxBar*80,2),opacity:.85}}/>
+          <div style={{flex:1,background:T.red,borderRadius:'4px 4px 0 0',height:Math.max(m.exp/maxBar*80,2),opacity:.8}}/>
+        </div>)}
+      </div>
+      <div style={{display:'flex',gap:6,marginTop:4}}>
+        {byMonth.map(m=><div key={m.key} style={{flex:1,fontFamily:T.en,fontSize:9,color:T.t,textAlign:'center'}}>{m.label}</div>)}
+      </div>
+      <div style={{display:'flex',gap:12,marginTop:10}}>
+        {[{c:T.J,l:'수입'},{c:T.red,l:'지출'}].map(x=><div key={x.l} style={{display:'flex',alignItems:'center',gap:4}}><div style={{width:8,height:8,borderRadius:2,background:x.c}}/><span style={{fontFamily:T.kr,fontSize:10,color:T.s}}>{x.l}</span></div>)}
+      </div>
+    </div>
+    {catExp.length>0&&<div style={{margin:'10px 14px 0',background:T.card,borderRadius:16,padding:'16px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+      <div style={{fontFamily:T.kr,fontSize:13,fontWeight:700,color:T.ink,marginBottom:12}}>지출 카테고리</div>
+      {catExp.map(c=><div key={c.cat} style={{marginBottom:10}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}><span style={{fontFamily:T.kr,fontSize:12,color:T.ink}}>{c.cat}</span><span style={{fontFamily:T.en,fontSize:12,fontWeight:700,color:T.red}}>₩{fmt(c.amt)}</span></div>
+        <div style={{height:5,borderRadius:999,background:'#F2F2F7'}}><div style={{height:'100%',borderRadius:999,background:T.red,width:`${Math.round(c.amt/totE*100)}%`,opacity:.7}}/></div>
+      </div>)}
+    </div>}
+    {catInc.length>0&&<div style={{margin:'10px 14px 0',background:T.card,borderRadius:16,padding:'16px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+      <div style={{fontFamily:T.kr,fontSize:13,fontWeight:700,color:T.ink,marginBottom:12}}>수입 카테고리</div>
+      {catInc.map(c=><div key={c.cat} style={{marginBottom:10}}>
+        <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}><span style={{fontFamily:T.kr,fontSize:12,color:T.ink}}>{c.cat}</span><span style={{fontFamily:T.en,fontSize:12,fontWeight:700,color:T.J}}>₩{fmt(c.amt)}</span></div>
+        <div style={{height:5,borderRadius:999,background:'#F2F2F7'}}><div style={{height:'100%',borderRadius:999,background:T.J,width:`${Math.round(c.amt/totI*100)}%`,opacity:.8}}/></div>
+      </div>)}
+    </div>}
+    <div style={{height:24}}/>
+  </div>;
+}
+function SubsidyScreen({data,mode,onMode}){
+  const [list,setList]=useState([]);
+  const [showAdd,setShowAdd]=useState(false);
+  const [draft,setDraft]=useState({name:'',org:'',amount:'',date:'',status:'신청예정',note:''});
+  const totReceived=list.filter(s=>s.status==='수령완료').reduce((a,s)=>a+s.amount,0);
+  const addSub=()=>{if(!draft.name.trim())return;setList(l=>[...l,{id:'s'+Date.now(),...draft,amount:parseInt(draft.amount)||0}]);setShowAdd(false);setDraft({name:'',org:'',amount:'',date:'',status:'신청예정',note:''});playSound('success');};
+  const STATUS_C={'수령완료':{bg:'#E8F5E9',fg:'#1C551C'},'신청중':{bg:'#FFF8E1',fg:'#7A5000'},'신청예정':{bg:'#F3F3F3',fg:T.s}};
+  return<div style={{flex:1,overflowY:'auto',background:T.bg,position:'relative'}}>
+    <TopBar mode={mode} onMode={onMode} leading={<div/>} trailing={<button onClick={()=>setShowAdd(true)} style={{background:T.L,border:'none',borderRadius:8,padding:'5px 12px',color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>+ 추가</button>}/>
+    <div style={{background:'linear-gradient(135deg,#3A2A10,#6A4820)',padding:'18px 20px 24px'}}>
+      <div style={{fontFamily:T.kr,fontSize:11,color:'rgba(255,255,255,.6)',letterSpacing:.8,marginBottom:4}}>누적 수령 보조금</div>
+      <div style={{fontFamily:T.en,fontSize:30,fontWeight:900,color:'#fff',letterSpacing:-1}}>₩{fmt(totReceived)}<span style={{fontSize:14,fontWeight:500,marginLeft:4}}>원</span></div>
+      <div style={{fontFamily:T.kr,fontSize:12,color:'rgba(255,255,255,.6)',marginTop:6}}>총 {list.length}건 등록 · {list.filter(s=>s.status==='수령완료').length}건 수령완료</div>
+    </div>
+    <div style={{padding:'14px 14px 80px'}}>
+      {list.map(s=><div key={s.id} style={{background:T.card,borderRadius:14,padding:'14px 16px',marginBottom:10,boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}><div style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.ink,flex:1,paddingRight:8}}>{s.name}</div><span style={{...STATUS_C[s.status],padding:'2px 8px',borderRadius:999,fontSize:11,fontWeight:700,fontFamily:T.kr,flexShrink:0}}>{s.status}</span></div>
+        <div style={{fontFamily:T.kr,fontSize:12,color:T.s,marginBottom:4}}>{s.org} · {s.date}</div>
+        {s.amount>0&&<div style={{fontFamily:T.en,fontSize:16,fontWeight:900,color:T.L}}>₩{fmt(s.amount)}</div>}
+        {s.note&&<div style={{fontFamily:T.kr,fontSize:11,color:T.t,marginTop:6,paddingTop:6,borderTop:`0.5px solid ${T.dv}`}}>{s.note}</div>}
+      </div>)}
+    </div>
+    {showAdd&&<>
+      <div onClick={()=>setShowAdd(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)',zIndex:400,backdropFilter:'blur(2px)'}}/>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,background:'#fff',borderRadius:'22px 22px 0 0',padding:'0 0 24px',zIndex:401,boxShadow:'0 -8px 40px rgba(0,0,0,0.18)'}}>
+        <div style={{display:'flex',justifyContent:'center',padding:'12px 0 4px'}}><div style={{width:36,height:4,borderRadius:99,background:'rgba(60,60,67,.18)'}}/></div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'4px 20px 12px'}}>
+          <button onClick={()=>setShowAdd(false)} style={{background:'none',border:'none',fontFamily:T.kr,fontSize:15,color:T.s,cursor:'pointer',padding:0}}>취소</button>
+          <span style={{fontFamily:T.kr,fontSize:16,fontWeight:700}}>보조금 추가</span>
+          <button onClick={addSub} style={{background:'none',border:'none',fontFamily:T.kr,fontSize:15,fontWeight:700,color:T.L,cursor:'pointer',padding:0}}>저장</button>
+        </div>
+        <div style={{padding:'0 20px',maxHeight:340,overflowY:'auto'}}>
+          {[{l:'보조금명',k:'name',ph:'예) 공익직불금'},{l:'지원기관',k:'org',ph:'예) 농림축산식품부'},{l:'수령금액(원)',k:'amount',ph:'0',t:'number'},{l:'수령일/예정일',k:'date',ph:'2026-06-01',t:'date'},{l:'메모',k:'note',ph:''}].map(f=><div key={f.k} style={{marginBottom:10}}>
+            <div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:4}}>{f.l}</div>
+            <input type={f.t||'text'} value={draft[f.k]} onChange={e=>setDraft(d=>({...d,[f.k]:e.target.value}))} placeholder={f.ph} style={{width:'100%',padding:'10px 12px',border:`1.5px solid ${T.bd}`,borderRadius:9,fontSize:14,color:T.ink,background:'#FAFCFA',outline:'none',fontFamily:T.kr,boxSizing:'border-box'}}/>
+          </div>)}
+          <div style={{marginBottom:10}}>
+            <div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,marginBottom:4}}>상태</div>
+            <div style={{display:'flex',gap:6}}>{['신청예정','신청중','수령완료'].map(s=><button key={s} onClick={()=>setDraft(d=>({...d,status:s}))} style={{flex:1,padding:'8px 4px',borderRadius:9,border:draft.status===s?`1.5px solid ${T.L}`:`0.5px solid ${T.bd}`,background:draft.status===s?T.Ls:'#fff',color:draft.status===s?T.Li:T.s,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:T.kr}}>{s}</button>)}</div>
+          </div>
+        </div>
+      </div>
+    </>}
+  </div>;
+}
+function MeScreen({data,mode,onMode,onNameChange,onReset}){
+  const{plots,diary,ledger}=data;
+  const DEFAULT_INFO={name:'',farm:'',phone:'',addr:'',bizno:'',cert:'',memo:''};
+  const [info,setInfo]=useState(DEFAULT_INFO);
+  const [editField,setEditField]=useState(null);
+  const [tempVal,setTempVal]=useState('');
+  const [showReset,setShowReset]=useState(false);
+  const totalArea=plots.reduce((a,p)=>a+parseInt((p.area||'0').replace(/[^0-9]/g,'')||0),0);
+  const thisMonth=new Date().toISOString().slice(0,7);
+  const monthWork=diary.filter(d=>d.date&&d.date.startsWith(thisMonth)).length;
+  const totalIncome=ledger.filter(l=>l.type==='income').reduce((a,l)=>a+l.amount,0);
+  const totalExpense=ledger.filter(l=>l.type==='expense').reduce((a,l)=>a+l.amount,0);
+  const FIELDS=[{k:'name',l:'성명',t:'text'},{k:'farm',l:'농장명',t:'text'},{k:'phone',l:'전화번호',t:'tel'},{k:'addr',l:'주소',t:'text'},{k:'bizno',l:'경영체번호',t:'text'},{k:'cert',l:'인증구분',t:'text'},{k:'memo',l:'메모',t:'memo'}];
+  const openEdit=(f)=>{setTempVal(info[f.k]);setEditField(f);};
+  const fmtPhone=v=>{const n=v.replace(/[^0-9]/g,'');if(n.length<=3)return n;if(n.length<=7)return n.slice(0,3)+'-'+n.slice(3);return n.slice(0,3)+'-'+n.slice(3,7)+'-'+n.slice(7,11);};
+  const commitEdit=()=>{if(editField){const val=editField.k==='phone'?fmtPhone(tempVal):tempVal;setInfo(i=>{const next={...i,[editField.k]:val};if(editField.k==='name'&&onNameChange)onNameChange(val);return next;});setEditField(null);playSound('success');}};
+  const onTempChange=e=>{const v=e.target.value;setTempVal(editField?.k==='phone'?fmtPhone(v):v);};
+  return<div style={{flex:1,overflowY:'auto',background:T.bg,position:'relative'}}>
+    <div style={{background:`linear-gradient(160deg,${T.Ji},${T.J})`,padding:'24px 20px 36px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:16}}>
+        <div style={{width:68,height:68,borderRadius:999,background:'rgba(255,255,255,.22)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,flexShrink:0,boxShadow:'0 4px 16px rgba(0,0,0,.15)'}}>👨‍🌾</div>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:T.kr,fontSize:23,fontWeight:900,color:'#fff'}}>{info.name||'농업인'}</div>
+          <div style={{fontFamily:T.kr,fontSize:14,color:'rgba(255,255,255,.78)',marginTop:2}}>{info.farm}</div>
+          {info.cert&&<div style={{display:'inline-block',background:'rgba(255,255,255,.18)',borderRadius:20,padding:'2px 10px',fontSize:11,color:'rgba(255,255,255,.9)',marginTop:6,fontFamily:T.kr,backdropFilter:'blur(4px)'}}>{info.cert}</div>}
+        </div>
+      </div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,padding:'16px 14px 0'}}>
+      {[{label:'내 필지',value:`${plots.length}곳`,sub:`총 ${totalArea.toLocaleString()}㎡`},{label:'이달 작업',value:`${monthWork}건`,sub:'기록'},{label:'총 수입',value:`₩${Math.round(totalIncome/10000)}만`,sub:'누적'},{label:'순손익',value:`₩${Math.round((totalIncome-totalExpense)/10000)}만`,sub:totalIncome>=totalExpense?'흑자':'적자',color:totalIncome>=totalExpense?T.J:T.red}]
+        .map(c=><div key={c.label} style={{background:T.card,borderRadius:16,padding:'14px 16px',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+          <div style={{fontFamily:T.kr,fontSize:11,color:T.s,fontWeight:600,letterSpacing:.3}}>{c.label}</div>
+          <div style={{fontFamily:T.kr,fontSize:22,fontWeight:900,color:c.color||T.ink,marginTop:4}}>{c.value}</div>
+          <div style={{fontFamily:T.kr,fontSize:11,color:T.t,marginTop:2}}>{c.sub}</div>
+        </div>)}
+    </div>
+    <div style={{margin:'14px 14px 0',background:T.card,borderRadius:16,overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+      <div style={{padding:'12px 16px',borderBottom:`0.5px solid ${T.dv}`,fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.s,letterSpacing:.6}}>농업인 정보</div>
+      {FIELDS.map((f,i,a)=><div key={f.k} onClick={()=>openEdit(f)} style={{display:'flex',alignItems:'center',padding:'13px 16px',borderBottom:i<a.length-1?`0.5px solid ${T.dv}`:'none',cursor:'pointer'}} onMouseEnter={e=>e.currentTarget.style.background='#F4F7F4'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+        <span style={{fontFamily:T.kr,fontSize:13,color:T.s,width:80,flexShrink:0}}>{f.l}</span>
+        <span style={{fontFamily:T.kr,fontSize:14,fontWeight:600,color:info[f.k]?T.ink:T.t,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{info[f.k]||'미입력'}</span>
+        {I.chR(13,T.t)}
+      </div>)}
+    </div>
+    <div style={{height:8}}/>
+    <div style={{margin:'0 14px',background:T.card,borderRadius:16,overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,0.06)'}}>
+      <div style={{padding:'12px 16px',borderBottom:`0.5px solid ${T.dv}`,display:'flex',alignItems:'center',gap:8}}><span style={{fontSize:14}}>💾</span><span style={{fontFamily:T.kr,fontSize:12,color:T.s,flex:1}}>데이터는 세션 중 유지됩니다</span></div>
+      <div onClick={()=>setShowReset(true)} style={{padding:'13px 16px',display:'flex',alignItems:'center',cursor:'pointer'}} onMouseEnter={e=>e.currentTarget.style.background='#FEF0EE'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+        <span style={{fontFamily:T.kr,fontSize:13,color:T.red,fontWeight:700,flex:1}}>데이터 전체 초기화</span>
+        {I.chR(13,T.red)}
+      </div>
+    </div>
+    <div style={{height:40}}/>
+    {editField&&<>
+      <div onClick={()=>setEditField(null)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.35)',zIndex:400,backdropFilter:'blur(2px)'}}/>
+      <div style={{position:'absolute',bottom:0,left:0,right:0,background:'#fff',borderRadius:'22px 22px 0 0',padding:'0 0 24px',zIndex:401,boxShadow:'0 -8px 40px rgba(0,0,0,0.18)'}}>
+        <div style={{display:'flex',justifyContent:'center',padding:'12px 0 8px'}}><div style={{width:36,height:4,borderRadius:99,background:'rgba(60,60,67,.18)'}}/></div>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'4px 20px 16px'}}>
+          <button onClick={()=>setEditField(null)} style={{background:'none',border:'none',fontFamily:T.kr,fontSize:15,color:T.s,cursor:'pointer',padding:0}}>취소</button>
+          <span style={{fontFamily:T.kr,fontSize:16,fontWeight:700,color:T.ink}}>{editField.l} 수정</span>
+          <button onClick={commitEdit} style={{background:'none',border:'none',fontFamily:T.kr,fontSize:15,fontWeight:700,color:T.J,cursor:'pointer',padding:0}}>완료</button>
+        </div>
+        <div style={{padding:'0 20px'}}>
+          {editField.t==='memo'
+            ?<textarea autoFocus value={tempVal} onChange={onTempChange} rows={4} placeholder="농장 메모를 입력하세요" style={{width:'100%',border:`1.5px solid ${T.J}60`,borderRadius:14,padding:'14px 16px',fontSize:16,color:T.ink,fontFamily:T.kr,outline:'none',resize:'none',boxSizing:'border-box',background:'#F7FAF7',lineHeight:1.6}}/>
+            :<div style={{background:'#F7FAF7',borderRadius:14,border:`1.5px solid ${T.J}60`,padding:'0 16px',display:'flex',alignItems:'center'}}>
+              <input autoFocus type={editField.k==='phone'?'tel':editField.t||'text'} value={tempVal} onChange={onTempChange} onKeyDown={e=>{if(e.key==='Enter')commitEdit();}} style={{flex:1,border:'none',background:'none',outline:'none',padding:'16px 0',fontSize:17,color:T.ink,fontFamily:T.kr}}/>
+              {tempVal&&<button onClick={()=>setTempVal('')} style={{background:'rgba(60,60,67,.15)',border:'none',borderRadius:999,width:20,height:20,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',fontSize:12,color:T.s,flexShrink:0}}>✕</button>}
+            </div>
+          }
+          <div style={{fontFamily:T.kr,fontSize:12,color:T.t,marginTop:8,paddingLeft:4}}>{editField.l} 항목을 입력 후 완료를 눌러주세요</div>
+        </div>
+      </div>
+    </>}
+    {showReset&&<>
+      <div onClick={()=>setShowReset(false)} style={{position:'absolute',inset:0,background:'rgba(0,0,0,0.4)',zIndex:400,backdropFilter:'blur(2px)'}}/>
+      <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'#fff',borderRadius:20,padding:'28px 24px',zIndex:401,width:'80%',boxShadow:'0 8px 40px rgba(0,0,0,0.2)',textAlign:'center'}}>
+        <div style={{fontSize:36,marginBottom:12}}>⚠️</div>
+        <div style={{fontFamily:T.kr,fontSize:16,fontWeight:700,color:T.ink,marginBottom:8}}>데이터 초기화</div>
+        <div style={{fontFamily:T.kr,fontSize:13,color:T.s,marginBottom:20,lineHeight:1.6}}>모든 필지·일지·장부 데이터가<br/>삭제됩니다. 계속하시겠습니까?</div>
+        <div style={{display:'flex',gap:10}}>
+          <button onClick={()=>setShowReset(false)} style={{flex:1,padding:'11px',borderRadius:12,border:`1px solid ${T.bd}`,background:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.s,cursor:'pointer'}}>취소</button>
+          <button onClick={()=>{onReset&&onReset();setShowReset(false);}} style={{flex:1,padding:'11px',borderRadius:12,border:'none',background:T.red,color:'#fff',fontFamily:T.kr,fontSize:14,fontWeight:700,cursor:'pointer'}}>초기화</button>
+        </div>
+      </div>
+    </>}
+  </div>;
+}
+
+function SearchPanel({data,onClose,nav,mode,onMode}){
+  const [q,setQ]=useState('');
+  const inp=useRef();
+  useEffect(()=>{setTimeout(()=>inp.current?.focus(),120);},[]);
+  const r=React.useMemo(()=>{
+    if(!q.trim())return{plots:[],diary:[],ledger:[]};
+    const kw=q.toLowerCase();
+    return{
+      plots:data.plots.filter(p=>p.name?.toLowerCase().includes(kw)||p.area?.toLowerCase().includes(kw)||p.crops?.some(c=>c.name?.toLowerCase().includes(kw))||p.address?.toLowerCase().includes(kw)),
+      diary:[...data.diary].sort((a,b)=>b.id-a.id).filter(d=>d.detail?.toLowerCase().includes(kw)||d.workType?.includes(kw)||d.cropVal?.toLowerCase().includes(kw)||d.date?.includes(kw)).slice(0,8),
+      ledger:[...data.ledger].sort((a,b)=>b.id-a.id).filter(l=>l.name?.toLowerCase().includes(kw)||l.cat?.includes(kw)||l.vendor?.toLowerCase().includes(kw)||l.date?.includes(kw)).slice(0,8),
+    };
+  },[q,data]);
+  const total=r.plots.length+r.diary.length+r.ledger.length;
+  const accent=mode==='journal'?T.J:T.L;
+  const fmt=n=>(n||0).toLocaleString('ko-KR');
+  return<div style={{position:'absolute',inset:0,zIndex:500,display:'flex',flexDirection:'column',background:T.bg}}>
+    <div style={{flexShrink:0,padding:'10px 14px 8px',background:T.bg,borderBottom:`0.5px solid ${T.bd}`}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <div style={{flex:1,display:'flex',alignItems:'center',gap:8,background:'rgba(60,60,67,.07)',borderRadius:12,padding:'0 12px',height:40}}>
+          {I.srch(16,T.t)}
+          <input ref={inp} value={q} onChange={e=>setQ(e.target.value)} placeholder="필지, 일지, 거래 검색..." style={{flex:1,border:'none',background:'none',outline:'none',fontSize:15,color:T.ink,fontFamily:T.kr}}/>
+          {q&&<button onClick={()=>setQ('')} style={{background:'rgba(60,60,67,.18)',border:'none',borderRadius:999,width:17,height:17,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:T.s,fontSize:10,flexShrink:0}}>✕</button>}
+        </div>
+        <button onClick={onClose} style={{border:'none',background:'none',fontFamily:T.kr,fontSize:14,fontWeight:700,color:accent,cursor:'pointer',padding:'4px 0',flexShrink:0}}>취소</button>
+      </div>
+    </div>
+    <div style={{flex:1,overflowY:'auto',padding:'0 14px 20px'}}>
+      {!q.trim()&&<div style={{padding:'36px 0',textAlign:'center'}}>
+        <div style={{fontSize:38,marginBottom:10}}>🔍</div>
+        <div style={{fontFamily:T.kr,fontSize:14,color:T.s}}>필지명, 작업 내용, 거래 항목을 검색하세요</div>
+        <div style={{marginTop:20,display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center'}}>
+          {['파종','관수','방제','수확','비료','농약'].map(k=><button key={k} onClick={()=>setQ(k)} style={{padding:'7px 14px',borderRadius:999,border:`0.5px solid ${T.bd}`,background:'#fff',fontFamily:T.kr,fontSize:13,color:T.ink,cursor:'pointer'}}>{k}</button>)}
+        </div>
+      </div>}
+      {q.trim()&&total===0&&<div style={{padding:'48px 0',textAlign:'center'}}>
+        <div style={{fontSize:34,marginBottom:10}}>😶</div>
+        <div style={{fontFamily:T.kr,fontSize:14,color:T.s}}>'{q}'에 대한 결과가 없습니다</div>
+      </div>}
+      {r.plots.length>0&&<div style={{marginTop:14}}>
+        <div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.t,letterSpacing:.8,marginBottom:8,textTransform:'uppercase'}}>필지 ({r.plots.length})</div>
+        {r.plots.map(p=><div key={p.id} onClick={()=>{nav.push('plot-detail',{plot:p});onClose();}} style={{display:'flex',alignItems:'center',gap:10,background:T.card,borderRadius:12,padding:'10px 12px',marginBottom:6,cursor:'pointer',border:`0.5px solid ${T.bd}`}}>
+          <div style={{width:36,height:36,borderRadius:10,background:accent+'18',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{I.map(17,accent)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.ink}}>{p.name}</div>
+            <div style={{fontFamily:T.kr,fontSize:11,color:T.s,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginTop:2}}>{p.crops?.map(c=>c.name).join(', ')||'미경작'} · {p.area}</div>
+          </div>{I.chR(12,T.t)}
+        </div>)}
+      </div>}
+      {r.diary.length>0&&<div style={{marginTop:14}}>
+        <div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.t,letterSpacing:.8,marginBottom:8,textTransform:'uppercase'}}>작업 일지 ({r.diary.length})</div>
+        {r.diary.map(d=>{const pl=data.plots.find(p=>p.id===d.plotId);return<div key={d.id} onClick={()=>{nav.push('log-detail',{log:d});onClose();}} style={{display:'flex',alignItems:'center',gap:10,background:T.card,borderRadius:12,padding:'10px 12px',marginBottom:6,cursor:'pointer',border:`0.5px solid ${T.bd}`}}>
+          <div style={{width:36,height:36,borderRadius:10,background:T.J+'18',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{I.cal(17,T.J)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:2}}>
+              <span style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.J,background:T.Js,padding:'1px 6px',borderRadius:999}}>{d.workType}</span>
+              <span style={{fontFamily:T.kr,fontSize:11,color:T.t}}>{pl?.name||'전체'}</span>
+            </div>
+            <div style={{fontFamily:T.kr,fontSize:12,color:T.s,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.detail?.slice(0,40)||'내용 없음'}</div>
+          </div>
+          <div style={{fontFamily:T.en,fontSize:10,color:T.t,flexShrink:0}}>{d.date?.slice(5)}</div>
+        </div>;})}
+      </div>}
+      {r.ledger.length>0&&<div style={{marginTop:14}}>
+        <div style={{fontFamily:T.kr,fontSize:11,fontWeight:700,color:T.t,letterSpacing:.8,marginBottom:8,textTransform:'uppercase'}}>거래 ({r.ledger.length})</div>
+        {r.ledger.map(l=><div key={l.id} onClick={()=>{nav.push('txn-detail',{txn:l});onClose();}} style={{display:'flex',alignItems:'center',gap:10,background:T.card,borderRadius:12,padding:'10px 12px',marginBottom:6,cursor:'pointer',border:`0.5px solid ${T.bd}`}}>
+          <div style={{width:36,height:36,borderRadius:10,background:l.type==='income'?'#E8F5E9':'#FFEBEE',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{l.type==='income'?I.aD(13,'#1C551C'):I.aU(13,T.red)}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontFamily:T.kr,fontSize:14,fontWeight:700,color:T.ink,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{l.name}</div>
+            <div style={{fontFamily:T.kr,fontSize:11,color:T.s,marginTop:2}}>{l.date} · {l.cat}</div>
+          </div>
+          <div style={{fontFamily:T.en,fontSize:13,fontWeight:700,color:l.type==='income'?'#1C551C':T.red,flexShrink:0}}>{l.type==='income'?'+':'-'}₩{fmt(l.amount)}</div>
+        </div>)}
+      </div>}
+    </div>
+  </div>;
+}
+
+function NotifPanel({notifications,onRead,onReadAll,onClose}){
+  const unread=notifications.filter(n=>!n.read).length;
+  const typeBg={tip:T.Js,weather:'#E8EFF8',reminder:T.Ls,diary:T.Js,ledger:T.Ls};
+  return<div style={{position:'absolute',inset:0,zIndex:500,display:'flex',flexDirection:'column',background:T.bg}}>
+    <div style={{flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 16px',background:T.bg,borderBottom:`0.5px solid ${T.bd}`}}>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <span style={{fontFamily:T.kr,fontSize:17,fontWeight:700,color:T.ink}}>알림</span>
+        {unread>0&&<span style={{background:T.red,color:'#fff',borderRadius:999,padding:'1px 7px',fontFamily:T.en,fontSize:11,fontWeight:700}}>{unread}</span>}
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        {unread>0&&<button onClick={onReadAll} style={{border:'none',background:'none',fontFamily:T.kr,fontSize:12,fontWeight:600,color:T.J,cursor:'pointer',padding:'4px 6px'}}>모두 읽음</button>}
+        <button onClick={onClose} style={BI}>{I.chL(16,T.ink)}</button>
+      </div>
+    </div>
+    <div style={{flex:1,overflowY:'auto',padding:'8px 14px 20px'}}>
+      {notifications.length===0&&<div style={{padding:'48px 0',textAlign:'center'}}><div style={{fontSize:36,marginBottom:12}}>🔔</div><div style={{fontFamily:T.kr,fontSize:15,color:T.s}}>알림이 없습니다</div></div>}
+      {notifications.map(n=><div key={n.id} onClick={()=>onRead(n.id)} style={{display:'flex',gap:12,padding:'12px 14px',borderRadius:14,marginBottom:8,background:n.read?T.card:'rgba(58,125,76,0.06)',border:`0.5px solid ${n.read?T.bd:T.J+'40'}`,cursor:'pointer',position:'relative'}}>
+        {!n.read&&<div style={{position:'absolute',top:14,right:14,width:7,height:7,borderRadius:999,background:T.red}}/>}
+        <div style={{width:42,height:42,borderRadius:12,background:typeBg[n.type]||T.Js,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{n.icon}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:3}}>
+            <span style={{fontFamily:T.kr,fontSize:13,fontWeight:700,color:T.ink}}>{n.title}</span>
+            <span style={{fontFamily:T.en,fontSize:10,color:T.t,flexShrink:0,marginLeft:8}}>{n.time}</span>
+          </div>
+          <div style={{fontFamily:T.kr,fontSize:12,color:T.s,lineHeight:1.5}}>{n.body}</div>
+        </div>
+      </div>)}
+    </div>
+  </div>;
+}
+
+function App(){
+  const [mode,setMode]=useState('journal');const [tab,setTab]=useState('home');const [stack,setStack]=useState([]);const [toast,setToast]=useState(null);
+  const [data,setData]=useState({plots:[],diary:[],ledger:[]});
+  const [showSearch,setShowSearch]=useState(false);
+  const [showNotif,setShowNotif]=useState(false);
+  const [notifications,setNotifications]=useState([
+    {id:1,type:'tip',icon:'🌱',title:'오늘의 농업 팁',body:'기온이 낮은 아침에 관수하면 증발량을 줄일 수 있어요.',time:'방금 전',read:false},
+    {id:2,type:'weather',icon:'🌤️',title:'오늘 날씨',body:'맑음 · 최저 9° 최고 22° · 강수확률 10%',time:'오전 6:00',read:false},
+    {id:3,type:'reminder',icon:'📋',title:'필지 등록 안내',body:'필지를 먼저 등록하면 작업 기록이 더 편리해집니다.',time:'어제',read:true},
+  ]);
+  useEffect(()=>{
+    const handler=e=>{const t=e.target.closest('button, [style*="cursor: pointer"], [style*="cursor:pointer"]');if(t)playSound('click');};
+    window.addEventListener('pointerdown',handler);return()=>window.removeEventListener('pointerdown',handler);
+  },[]);
+  const [userName,setUserName]=useState('');
+  const showToast=useCallback((msg,ok=true)=>{setToast({msg,ok});setTimeout(()=>setToast(null),2200);},[]);
+  const nav={push:(s,p={})=>setStack(st=>[...st,{screen:s,params:p}]),pop:()=>setStack(s=>s.slice(0,-1))};
+  const goTab=t=>{setTab(t);setStack([]);};const goMode=m=>{setMode(m);setTab('home');setStack([]);};const goHome=()=>{setStack([]);setTab('home');};
+  const addDiary=e=>{
+    setData(d=>({...d,diary:[e,...d.diary]}));
+    setNotifications(n=>[{id:Date.now(),type:'diary',icon:'📝',title:'작업 일지 저장됨',body:`${e.workType} · ${e.date}`,time:'방금 전',read:false},...n]);
+    showToast('작업 일지가 저장되었습니다');playSound('success');goHome();
+  };
+  const addTxn=t=>{
+    setData(d=>({...d,ledger:[t,...d.ledger]}));
+    setNotifications(n=>[{id:Date.now(),type:'ledger',icon:t.type==='income'?'💵':'💸',title:t.type==='income'?'수입 등록됨':'지출 등록됨',body:`${t.name} · ${(t.amount||0).toLocaleString('ko-KR')}원`,time:'방금 전',read:false},...n]);
+    showToast('거래가 저장되었습니다');playSound('success');goHome();
+  };
+  const addPlot=p=>{setData(d=>({...d,plots:[...d.plots,{...p,crops:p.crops||[]}]}));showToast('필지가 추가되었습니다');playSound('success');goHome();};
+  const addCropToPlot=(pid,crop)=>{setData(d=>({...d,plots:d.plots.map(p=>p.id===pid?{...p,crops:[...(p.crops||[]),{id:'c'+mkId(),...crop}]}:p)}));showToast('작물이 추가되었습니다');playSound('success');};
+  const deletePlot=pid=>{setData(d=>({...d,plots:d.plots.filter(p=>p.id!==pid)}));showToast('필지가 삭제되었습니다');nav.pop();};
+  const handleReset=()=>{setData({plots:[],diary:[],ledger:[]});setUserName('');goHome();showToast('초기화되었습니다');};
+  const accent=mode==='journal'?T.J:T.L;
+  const jTabs=[{k:'home',label:'홈',fn:I.home},{k:'cal',label:'일지',fn:I.cal},{k:'add',label:'',fn:null,add:true},{k:'map',label:'필지',fn:I.map},{k:'me',label:'내정보',fn:I.user}];
+  const lTabs=[{k:'home',label:'결산',fn:I.home},{k:'recp',label:'거래',fn:I.recpt},{k:'add',label:'',fn:null,add:true},{k:'pnl',label:'손익',fn:I.chart},{k:'sub',label:'보조금',fn:I.wallet}];
+  const tabs=mode==='journal'?jTabs:lTabs;
+  const cur=stack.length>0?stack[stack.length-1]:null;
+  const props={nav,mode,onMode:goMode,data,toast2:showToast,goHome,deletePlot,addCropToPlot,userName,onSearch:()=>setShowSearch(true),onBell:()=>setShowNotif(true),notifCount:notifications.filter(n=>!n.read).length};
+  const renderPushed=()=>{if(!cur)return null;const{screen:s,params:p}=cur;switch(s){case 'log-detail':return<LogDetail {...props} params={p}/>;case 'plot-detail':return<PlotDetail {...props} params={p}/>;case 'all-logs':return<AllLogs {...props}/>;case 'all-plots':return<AllPlots {...props}/>;case 'add-work':return<JAddWork {...props} onSave={addDiary} initParams={p}/>;case 'add-plot':return<AddPlot {...props} onSave={addPlot}/>;case 'add-txn':return<LAddTxn {...props} onSave={addTxn}/>;case 'add-subsidy':return<LAddTxn {...props} onSave={addTxn}/>;case 'all-txns':return<AllTxns {...props}/>;case 'txn-detail':return<TxnDetail {...props} params={p}/>;default:return null;}};
+  const renderTab=()=>{if(mode==='journal'){if(tab==='home')return<JHome {...props}/>;if(tab==='cal')return<JCal {...props}/>;if(tab==='map')return<JMap {...props}/>;if(tab==='add')return<JAddWork {...props} onSave={addDiary} initParams={{}}/>;if(tab==='me')return<MeScreen data={data} mode={mode} onMode={goMode} onNameChange={setUserName} onReset={handleReset}/>;}else{if(tab==='home')return<LHome {...props}/>;if(tab==='recp')return<AllTxns {...props}/>;if(tab==='add')return<LAddTxn {...props} onSave={addTxn}/>;if(tab==='pnl')return<PnlScreen data={data} mode={mode} onMode={goMode}/>;if(tab==='sub')return<SubsidyScreen data={data} mode={mode} onMode={goMode}/>;}return null;};
+  const isMobile=window.innerWidth<=600||/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const inner=<>
+    <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}@keyframes wave{from{transform:scaleY(.3)}to{transform:scaleY(1.1)}}`}</style>
+    {cur?<div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>{renderPushed()}</div>:<div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>{renderTab()}<TabBar tabs={tabs} active={tab} onTab={t=>{if(t==='add')nav.push(mode==='journal'?'add-work':'add-txn',{});else goTab(t);}} accent={accent}/></div>}
+    {toast&&<Toast msg={toast.msg} color={toast.ok?T.J:T.red}/>}
+    {showSearch&&<SearchPanel data={data} onClose={()=>setShowSearch(false)} nav={nav} mode={mode} onMode={goMode}/>}
+    {showNotif&&<NotifPanel notifications={notifications} onRead={id=>setNotifications(n=>n.map(x=>x.id===id?{...x,read:true}:x))} onReadAll={()=>setNotifications(n=>n.map(x=>({...x,read:true})))} onClose={()=>setShowNotif(false)}/>}
+  </>;
+  if(isMobile){
+    return<div style={{position:'fixed',top:0,left:0,right:0,bottom:0,display:'flex',flexDirection:'column',background:T.bg,fontFamily:T.kr,overflow:'hidden',paddingTop:'env(safe-area-inset-top,0px)',paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
+      {inner}
+    </div>;
+  }
+  return<div style={{display:'flex',justifyContent:'center',alignItems:'center',height:'100vh',background:'#EFEEEA',padding:'16px',fontFamily:T.kr,boxSizing:'border-box'}}>
+    <div style={{display:'flex',flexDirection:'column',width:'100%',maxWidth:390,height:'calc(100vh - 32px)',maxHeight:844}}>
+      <Phone isMobile={false}>{inner}</Phone>
+    </div>
+  </div>;
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+  </script>
+</body>
+</html>
